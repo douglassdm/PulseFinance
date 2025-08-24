@@ -9,6 +9,16 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
+import BankAccounts from "./pages/BankAccounts";
+import Categories from "./pages/Categories";
+import Investments from "./pages/Investments";
+import Debts from "./pages/Debts";
+import Goals from "./pages/Goals";
+import Tags from "./pages/Tags";
+import RecurringTransactions from "./pages/RecurringTransactions";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,94 +33,83 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            {/* Placeholder routes for sidebar navigation */}
-            <Route path="/transactions" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Transações</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/accounts" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Contas Bancárias</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/investments" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Investimentos</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/goals" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Metas Financeiras</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/debts" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Dívidas</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/categories" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Categorias</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/recurring" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Transações Recorrentes</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Layout>
-                  <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold mb-4">Configurações</h2>
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/transactions" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Transactions />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/bank-accounts" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <BankAccounts />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/categories" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Categories />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/investments" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Investments />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/debts" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Debts />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/goals" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Goals />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/tags" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Tags />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/recurring" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <RecurringTransactions />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Reports />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Settings />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
