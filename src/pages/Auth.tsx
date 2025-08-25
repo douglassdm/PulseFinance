@@ -1,26 +1,32 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, DollarSign } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, DollarSign } from "lucide-react";
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
   if (user) {
-    navigate('/dashboard');
+    navigate("/dashboard");
     return null;
   }
 
@@ -37,7 +43,7 @@ const Auth = () => {
 
     setLoading(true);
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       toast({
         title: "Erro no login",
@@ -49,7 +55,7 @@ const Auth = () => {
         title: "Sucesso!",
         description: "Login realizado com sucesso.",
       });
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
     setLoading(false);
   };
@@ -76,7 +82,7 @@ const Auth = () => {
 
     setLoading(true);
     const { error } = await signUp(email, password, name);
-    
+
     if (error) {
       toast({
         title: "Erro no cadastro",
@@ -86,28 +92,38 @@ const Auth = () => {
     } else {
       toast({
         title: "Sucesso!",
-        description: "Conta criada com sucesso. Verifique seu email para confirmação.",
+        description:
+          "Conta criada com sucesso. Verifique seu email para confirmação.",
       });
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-gradient)' }}>
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: "var(--bg-gradient)" }}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="p-3 rounded-xl" style={{ background: 'var(--income-gradient)' }}>
+            <div
+              className="p-3 rounded-xl"
+              style={{ background: "var(--income-gradient)" }}
+            >
               <DollarSign className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2">FinanceApp</h1>
+          <h1 className="text-3xl font-bold mb-2">PulseFinance</h1>
           <p className="text-muted-foreground">
             Controle completo das suas finanças pessoais
           </p>
         </div>
 
-        <Card className="shadow-lg" style={{ background: 'var(--card-gradient)' }}>
+        <Card
+          className="shadow-lg"
+          style={{ background: "var(--card-gradient)" }}
+        >
           <CardHeader className="text-center pb-2">
             <CardTitle>Bem-vindo!</CardTitle>
             <CardDescription>
@@ -120,7 +136,7 @@ const Auth = () => {
                 <TabsTrigger value="signin">Entrar</TabsTrigger>
                 <TabsTrigger value="signup">Cadastrar</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
@@ -145,18 +161,20 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={loading}
-                    style={{ background: 'var(--income-gradient)' }}
+                    style={{ background: "var(--income-gradient)" }}
                   >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Entrar
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
@@ -192,13 +210,15 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full"
                     disabled={loading}
-                    style={{ background: 'var(--income-gradient)' }}
+                    style={{ background: "var(--income-gradient)" }}
                   >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Criar conta
                   </Button>
                 </form>

@@ -279,6 +279,9 @@ const RecurringTransactions = () => {
           default:
             nextDate.setMonth(nextDate.getMonth() + 1);
         }
+      } else {
+        // If start date is in the future, the first occurrence is the start date itself
+        nextDate = new Date(startDateObj);
       }
       
       const nextOccurrenceDate = nextDate.toISOString().split('T')[0];

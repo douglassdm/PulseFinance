@@ -171,8 +171,16 @@ All colors MUST be HSL.
     );
 
     /* Dark mode backgrounds */
-    --bg-gradient: linear-gradient(135deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 17.5%));
-    --card-gradient: linear-gradient(135deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 17.5%));
+    --bg-gradient: linear-gradient(
+      135deg,
+      hsl(222.2 84% 4.9%),
+      hsl(217.2 32.6% 17.5%)
+    );
+    --card-gradient: linear-gradient(
+      135deg,
+      hsl(222.2 84% 4.9%),
+      hsl(217.2 32.6% 17.5%)
+    );
 
     /* Dark mode shadows */
     --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
@@ -198,6 +206,15 @@ All colors MUST be HSL.
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Sidebar specific styles */
@@ -217,5 +234,82 @@ All colors MUST be HSL.
   [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover {
     background-color: hsl(var(--sidebar-accent));
     color: hsl(var(--sidebar-accent-foreground));
+  }
+}
+
+/* Modal and Dialog specific styles */
+@layer components {
+  /* Ensure modals are properly layered */
+  [data-radix-dialog-overlay] {
+    z-index: 50 !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background-color: hsl(0 0% 0% / 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  [data-radix-dialog-content] {
+    z-index: 51 !important;
+    position: fixed !important;
+    background: hsl(var(--background)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: var(--shadow-strong) !important;
+    border-radius: var(--radius) !important;
+    padding: 1.5rem !important;
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Fix for Select component z-index issues */
+  [data-radix-popper-content-wrapper] {
+    z-index: 60 !important;
+  }
+
+  /* Ensure proper background for modals */
+  [data-radix-dialog-overlay] {
+    background-color: hsl(0 0% 0% / 0.8);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Fix for potential white screen issues */
+  body[style*="overflow: hidden"] {
+    background: hsl(var(--background)) !important;
+  }
+
+  /* Ensure dialog content is visible */
+  [data-radix-dialog-content] {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-strong);
+  }
+
+  /* Additional fixes for modal positioning */
+  [data-radix-dialog-content] {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: auto !important;
+    min-width: 400px !important;
+  }
+
+  /* Ensure Select dropdowns appear above modals */
+  [data-radix-select-content] {
+    z-index: 70 !important;
+    background: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-medium) !important;
+  }
+
+  /* Fix for potential React rendering issues */
+  .dialog-open {
+    overflow: hidden !important;
+  }
+
+  /* Ensure proper stacking context */
+  .modal-container {
+    position: relative;
+    z-index: 1000;
   }
 }
