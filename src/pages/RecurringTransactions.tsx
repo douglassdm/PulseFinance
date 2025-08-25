@@ -178,19 +178,45 @@ const RecurringTransactions = () => {
     setCreateModalOpen(true);
   };
 
-  const openEditModal = (transaction: RecurringTransaction) => {
-    setFormData({
-      type: transaction.type,
-      description: transaction.description,
-      value: transaction.value.toString(),
-      category_id: '', // We need to get this from the transaction
-      bank_account_id: '', // We need to get this from the transaction
-      frequency: transaction.frequency,
-      start_date: transaction.start_date.split('T')[0],
-      end_date: transaction.end_date ? transaction.end_date.split('T')[0] : ''
-    });
-    setEditingTransaction(transaction);
-    setEditModalOpen(true);
+  const openEditModal = async (transaction: RecurringTransaction) => {
+    try {
+      // Get full transaction details including category_id and bank_account_id
+      const { data: fullTransaction, error } = await supabase
+        .from('recurring_transactions')
+        .select('*')
+        .eq('id', transaction.id)
+        .single();
+
+      if (error) throw error;
+
+      setFormData({
+        type: transaction.type,
+        description: transaction.description,
+        value: transaction.value.toString(),
+        category_id: fullTransaction.category_id || '',
+        bank_account_id: fullTransaction.bank_account_id || '',
+        frequency: transaction.frequency,
+        start_date: transaction.start_date.split('T')[0],
+        end_date: transaction.end_date ? transaction.end_date.split('T')[0] : ''
+      });
+      setEditingTransaction(transaction);
+      setEditModalOpen(true);
+    } catch (error) {
+      console.error('Erro ao carregar dados da transação:', error);
+      // Fallback to original logic if query fails
+      setFormData({
+        type: transaction.type,
+        description: transaction.description,
+        value: transaction.value.toString(),
+        category_id: '',
+        bank_account_id: '',
+        frequency: transaction.frequency,
+        start_date: transaction.start_date.split('T')[0],
+        end_date: transaction.end_date ? transaction.end_date.split('T')[0] : ''
+      });
+      setEditingTransaction(transaction);
+      setEditModalOpen(true);
+    }
   };
 
   const openDeleteModal = (transaction: RecurringTransaction) => {
@@ -207,6 +233,62 @@ const RecurringTransactions = () => {
     if (!user || !formData.description.trim() || !formData.value || !formData.bank_account_id || !formData.start_date) return;
 
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const startDate = formData.start_date;
+      const endDate = formData.end_date || null;
+      
+      // Calculate next occurrence date based on start date and frequency
+      const startDateObj = new Date(startDate);
+      let nextDate = new Date(startDateObj);
+      
+      // If start date is today or in the past, create the first transaction and calculate next occurrence
+      const shouldCreateFirstTransaction = startDate <= today && (!endDate || endDate > today);
+      
+      if (shouldCreateFirstTransaction) {
+        // Create the first transaction
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert([{
+            user_id: user.id,
+            type: formData.type,
+            value: parseFloat(formData.value),
+            description: `${formData.description.trim()} (Primeira ocorrência automática)`,
+            transaction_date: startDate,
+            category_id: formData.category_id || null,
+            bank_account_id: formData.bank_account_id
+          }]);
+
+        if (transactionError) {
+          console.error('Erro ao criar primeira transação:', transactionError);
+        }
+        
+        // Calculate next occurrence from start date
+        switch (formData.frequency) {
+          case 'daily':
+            nextDate.setDate(nextDate.getDate() + 1);
+            break;
+          case 'weekly':
+            nextDate.setDate(nextDate.getDate() + 7);
+            break;
+          case 'monthly':
+            nextDate.setMonth(nextDate.getMonth() + 1);
+            break;
+          case 'yearly':
+            nextDate.setFullYear(nextDate.getFullYear() + 1);
+            break;
+          default:
+            nextDate.setMonth(nextDate.getMonth() + 1);
+        }
+      }
+      
+      const nextOccurrenceDate = nextDate.toISOString().split('T')[0];
+
+      // Check if the recurring transaction should be automatically paused
+      let effectiveEndDate = endDate;
+      if (endDate && endDate <= today) {
+        effectiveEndDate = endDate;
+      }
+
       const { data, error } = await supabase
         .from('recurring_transactions')
         .insert([{
@@ -217,9 +299,9 @@ const RecurringTransactions = () => {
           category_id: formData.category_id || null,
           bank_account_id: formData.bank_account_id,
           frequency: formData.frequency,
-          start_date: formData.start_date,
-          end_date: formData.end_date || null,
-          next_occurrence_date: formData.start_date
+          start_date: startDate,
+          end_date: effectiveEndDate,
+          next_occurrence_date: nextOccurrenceDate
         }])
         .select();
 
@@ -228,6 +310,14 @@ const RecurringTransactions = () => {
       await loadRecurringTransactions();
       setCreateModalOpen(false);
       resetForm();
+      
+      // Show success message with status
+      const isActive = !effectiveEndDate || effectiveEndDate > today;
+      const message = shouldCreateFirstTransaction 
+        ? `Transação recorrente criada e primeira ocorrência executada - Status: ${isActive ? 'Ativa' : 'Inativa'}`
+        : `Transação recorrente criada - Status: ${isActive ? 'Ativa' : 'Inativa'}`;
+      console.log(message);
+      
     } catch (error) {
       console.error('Erro ao criar transação recorrente:', error);
     }
@@ -237,6 +327,58 @@ const RecurringTransactions = () => {
     if (!editingTransaction || !formData.description.trim() || !formData.value || !formData.bank_account_id || !formData.start_date) return;
 
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const startDate = formData.start_date;
+      const endDate = formData.end_date || null;
+      
+      // Calculate appropriate next occurrence date based on changes
+      let nextOccurrenceDate = editingTransaction.next_occurrence_date;
+      
+      // If frequency changed, recalculate next occurrence
+      if (formData.frequency !== editingTransaction.frequency) {
+        const currentNextDate = new Date(editingTransaction.next_occurrence_date);
+        
+        // Recalculate based on new frequency
+        switch (formData.frequency) {
+          case 'daily':
+            nextOccurrenceDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            break;
+          case 'weekly':
+            nextOccurrenceDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            break;
+          case 'monthly':
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            nextOccurrenceDate = nextMonth.toISOString().split('T')[0];
+            break;
+          case 'yearly':
+            const nextYear = new Date();
+            nextYear.setFullYear(nextYear.getFullYear() + 1);
+            nextOccurrenceDate = nextYear.toISOString().split('T')[0];
+            break;
+          default:
+            const defaultNext = new Date();
+            defaultNext.setMonth(defaultNext.getMonth() + 1);
+            nextOccurrenceDate = defaultNext.toISOString().split('T')[0];
+        }
+      }
+
+      // If end date is set and is in the past or today, the transaction becomes inactive
+      let effectiveEndDate = endDate;
+      if (endDate && endDate <= today) {
+        effectiveEndDate = endDate;
+      }
+
+      // If transaction was inactive and end_date is removed or moved to future, reactivate
+      if (!endDate || (endDate && endDate > today)) {
+        // If removing end date or setting future end date, ensure next occurrence is appropriate
+        if (nextOccurrenceDate <= today) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          nextOccurrenceDate = tomorrow.toISOString().split('T')[0];
+        }
+      }
+
       const { error } = await supabase
         .from('recurring_transactions')
         .update({
@@ -246,8 +388,9 @@ const RecurringTransactions = () => {
           category_id: formData.category_id || null,
           bank_account_id: formData.bank_account_id,
           frequency: formData.frequency,
-          start_date: formData.start_date,
-          end_date: formData.end_date || null
+          start_date: startDate,
+          end_date: effectiveEndDate,
+          next_occurrence_date: nextOccurrenceDate
         })
         .eq('id', editingTransaction.id);
 
@@ -257,6 +400,11 @@ const RecurringTransactions = () => {
       setEditModalOpen(false);
       setEditingTransaction(null);
       resetForm();
+      
+      // Show success message with status
+      const isActive = !effectiveEndDate || effectiveEndDate > today;
+      console.log(`Transação recorrente editada com sucesso - Status: ${isActive ? 'Ativa' : 'Inativa'}`);
+      
     } catch (error) {
       console.error('Erro ao editar transação recorrente:', error);
     }
@@ -301,8 +449,8 @@ const RecurringTransactions = () => {
     }
   };
 
-  const calculateNextOccurrence = (startDate: string, frequency: string): string => {
-    const date = new Date(startDate);
+  const calculateNextOccurrence = (currentOccurrenceDate: string, frequency: string): string => {
+    const date = new Date(currentOccurrenceDate);
     
     switch (frequency) {
       case 'daily':
@@ -558,7 +706,7 @@ const RecurringTransactions = () => {
                       <TableCell>
                         <Badge 
                           variant={transaction.type === 'receita' ? 'default' : 'destructive'}
-                          className={transaction.type === 'receita' ? 'bg-success text-white' : 'bg-expense text-white'}
+                          className={transaction.type === 'receita' ? 'bg-success text-success-foreground' : 'bg-expense text-expense-foreground'}
                         >
                           {transaction.type === 'receita' ? 'Receita' : 'Despesa'}
                         </Badge>
@@ -578,6 +726,9 @@ const RecurringTransactions = () => {
                           </Button>
                           <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openPauseModal(transaction)}>
                             <Pause className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(transaction)}>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

@@ -63,18 +63,22 @@ export default {
 				},
 				income: {
 					DEFAULT: 'hsl(var(--income))',
+					foreground: 'hsl(var(--success-foreground))',
 					light: 'hsl(var(--income-light))'
 				},
 				expense: {
 					DEFAULT: 'hsl(var(--expense))',
+					foreground: 'hsl(var(--destructive-foreground))',
 					light: 'hsl(var(--expense-light))'
 				},
 				investment: {
 					DEFAULT: 'hsl(var(--investment))',
+					foreground: 'hsl(var(--primary-foreground))',
 					light: 'hsl(var(--investment-light))'
 				},
 				goal: {
 					DEFAULT: 'hsl(var(--goal))',
+					foreground: 'hsl(var(--primary-foreground))',
 					light: 'hsl(var(--goal-light))'
 				},
 				sidebar: {

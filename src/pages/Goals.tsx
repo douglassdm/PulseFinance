@@ -300,12 +300,12 @@ const Goals = () => {
                     <CardDescription className="flex items-center gap-2">
                       <Badge 
                         variant={goal.type === 'receita' ? 'default' : 'destructive'}
-                        className={goal.type === 'receita' ? 'bg-success text-white' : 'bg-expense text-white'}
+                        className={goal.type === 'receita' ? 'bg-success text-success-foreground' : 'bg-expense text-expense-foreground'}
                       >
                         {goal.categories?.name || 'Todas as categorias'}
                       </Badge>
                       {isCompleted && (
-                        <Badge className="bg-goal text-white">
+                        <Badge className="bg-goal text-goal-foreground">
                           Concluída!
                         </Badge>
                       )}

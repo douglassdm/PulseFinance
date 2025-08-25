@@ -242,7 +242,7 @@ const Categories = () => {
                 </div>
                 <Badge 
                   variant={category.type === 'receita' ? 'default' : 'destructive'}
-                  className={category.type === 'receita' ? 'bg-success text-white' : 'bg-expense text-white'}
+                  className={category.type === 'receita' ? 'bg-success text-success-foreground' : 'bg-expense text-expense-foreground'}
                 >
                   {category.type === 'receita' ? 'Receita' : 'Despesa'}
                 </Badge>
