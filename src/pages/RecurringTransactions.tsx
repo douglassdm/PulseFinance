@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +28,17 @@ interface RecurringTransaction {
   created_at: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  type: 'receita' | 'despesa';
+}
+
+interface BankAccount {
+  id: string;
+  name: string;
+}
+
 const frequencyLabels: Record<string, string> = {
   daily: 'Diário',
   weekly: 'Semanal',
@@ -33,10 +50,31 @@ const RecurringTransactions = () => {
   const { user } = useAuth();
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [pauseModalOpen, setPauseModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<RecurringTransaction | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState<RecurringTransaction | null>(null);
+  const [pausingTransaction, setPausingTransaction] = useState<RecurringTransaction | null>(null);
+  const [formData, setFormData] = useState({
+    type: 'receita' as 'receita' | 'despesa',
+    description: '',
+    value: '',
+    category_id: '',
+    bank_account_id: '',
+    frequency: 'monthly',
+    start_date: '',
+    end_date: ''
+  });
 
   useEffect(() => {
     if (user) {
       loadRecurringTransactions();
+      loadCategories();
+      loadBankAccounts();
     }
   }, [user]);
 
@@ -60,6 +98,40 @@ const RecurringTransactions = () => {
       console.error('Erro ao carregar transações recorrentes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, type')
+        .eq('user_id', user.id)
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
+
+  const loadBankAccounts = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('name');
+
+      if (error) throw error;
+      setBankAccounts(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar contas bancárias:', error);
     }
   };
 
@@ -87,6 +159,239 @@ const RecurringTransactions = () => {
     const hasEndDate = transaction.end_date;
     return !hasEndDate || transaction.end_date >= today;
   };
+
+  const resetForm = () => {
+    setFormData({
+      type: 'receita',
+      description: '',
+      value: '',
+      category_id: '',
+      bank_account_id: '',
+      frequency: 'monthly',
+      start_date: '',
+      end_date: ''
+    });
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setCreateModalOpen(true);
+  };
+
+  const openEditModal = (transaction: RecurringTransaction) => {
+    setFormData({
+      type: transaction.type,
+      description: transaction.description,
+      value: transaction.value.toString(),
+      category_id: '', // We need to get this from the transaction
+      bank_account_id: '', // We need to get this from the transaction
+      frequency: transaction.frequency,
+      start_date: transaction.start_date.split('T')[0],
+      end_date: transaction.end_date ? transaction.end_date.split('T')[0] : ''
+    });
+    setEditingTransaction(transaction);
+    setEditModalOpen(true);
+  };
+
+  const openDeleteModal = (transaction: RecurringTransaction) => {
+    setDeletingTransaction(transaction);
+    setDeleteModalOpen(true);
+  };
+
+  const openPauseModal = (transaction: RecurringTransaction) => {
+    setPausingTransaction(transaction);
+    setPauseModalOpen(true);
+  };
+
+  const handleCreate = async () => {
+    if (!user || !formData.description.trim() || !formData.value || !formData.bank_account_id || !formData.start_date) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('recurring_transactions')
+        .insert([{
+          user_id: user.id,
+          type: formData.type,
+          description: formData.description.trim(),
+          value: parseFloat(formData.value),
+          category_id: formData.category_id || null,
+          bank_account_id: formData.bank_account_id,
+          frequency: formData.frequency,
+          start_date: formData.start_date,
+          end_date: formData.end_date || null,
+          next_occurrence_date: formData.start_date
+        }])
+        .select();
+
+      if (error) throw error;
+
+      await loadRecurringTransactions();
+      setCreateModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao criar transação recorrente:', error);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editingTransaction || !formData.description.trim() || !formData.value || !formData.bank_account_id || !formData.start_date) return;
+
+    try {
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .update({
+          type: formData.type,
+          description: formData.description.trim(),
+          value: parseFloat(formData.value),
+          category_id: formData.category_id || null,
+          bank_account_id: formData.bank_account_id,
+          frequency: formData.frequency,
+          start_date: formData.start_date,
+          end_date: formData.end_date || null
+        })
+        .eq('id', editingTransaction.id);
+
+      if (error) throw error;
+
+      await loadRecurringTransactions();
+      setEditModalOpen(false);
+      setEditingTransaction(null);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao editar transação recorrente:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingTransaction) return;
+
+    try {
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .delete()
+        .eq('id', deletingTransaction.id);
+
+      if (error) throw error;
+
+      await loadRecurringTransactions();
+      setDeleteModalOpen(false);
+      setDeletingTransaction(null);
+    } catch (error) {
+      console.error('Erro ao deletar transação recorrente:', error);
+    }
+  };
+
+  const handlePause = async () => {
+    if (!pausingTransaction) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .update({ end_date: today })
+        .eq('id', pausingTransaction.id);
+
+      if (error) throw error;
+
+      await loadRecurringTransactions();
+      setPauseModalOpen(false);
+      setPausingTransaction(null);
+    } catch (error) {
+      console.error('Erro ao pausar transação recorrente:', error);
+    }
+  };
+
+  const calculateNextOccurrence = (startDate: string, frequency: string): string => {
+    const date = new Date(startDate);
+    
+    switch (frequency) {
+      case 'daily':
+        date.setDate(date.getDate() + 1);
+        break;
+      case 'weekly':
+        date.setDate(date.getDate() + 7);
+        break;
+      case 'monthly':
+        date.setMonth(date.getMonth() + 1);
+        break;
+      case 'yearly':
+        date.setFullYear(date.getFullYear() + 1);
+        break;
+      default:
+        date.setMonth(date.getMonth() + 1);
+    }
+    
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleExecuteNow = async (transaction: RecurringTransaction) => {
+    if (!user) return;
+
+    try {
+      // First, get the full transaction details including category_id and bank_account_id
+      const { data: fullTransaction, error: fetchError } = await supabase
+        .from('recurring_transactions')
+        .select('*')
+        .eq('id', transaction.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create the regular transaction
+      const { error: insertError } = await supabase
+        .from('transactions')
+        .insert([{
+          user_id: user.id,
+          type: transaction.type,
+          value: transaction.value,
+          description: `${transaction.description} (Executado manualmente)`,
+          transaction_date: new Date().toISOString().split('T')[0],
+          category_id: fullTransaction.category_id,
+          bank_account_id: fullTransaction.bank_account_id
+        }]);
+
+      if (insertError) throw insertError;
+
+      // Update the next occurrence date
+      const nextOccurrence = calculateNextOccurrence(transaction.next_occurrence_date, transaction.frequency);
+      
+      const { error: updateError } = await supabase
+        .from('recurring_transactions')
+        .update({ next_occurrence_date: nextOccurrence })
+        .eq('id', transaction.id);
+
+      if (updateError) throw updateError;
+
+      // Reload the recurring transactions to show updated next occurrence
+      await loadRecurringTransactions();
+      
+      console.log('Transação executada e próxima ocorrência atualizada com sucesso');
+    } catch (error) {
+      console.error('Erro ao executar transação:', error);
+    }
+  };
+
+  const handleReactivate = async (transaction: RecurringTransaction) => {
+    try {
+      // Remove the end_date to reactivate the transaction
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .update({ 
+          end_date: null,
+          next_occurrence_date: new Date().toISOString().split('T')[0] // Set next occurrence to today
+        })
+        .eq('id', transaction.id);
+
+      if (error) throw error;
+
+      await loadRecurringTransactions();
+      console.log('Transação reativada com sucesso');
+    } catch (error) {
+      console.error('Erro ao reativar transação:', error);
+    }
+  };
+
+  const filteredCategories = categories.filter(cat => cat.type === formData.type);
 
   const activeTransactions = recurringTransactions.filter(isActive);
   const inactiveTransactions = recurringTransactions.filter(t => !isActive(t));
@@ -124,7 +429,7 @@ const RecurringTransactions = () => {
             Gerencie suas receitas e despesas automáticas
           </p>
         </div>
-        <Button style={{ background: 'var(--income-gradient)' }}>
+        <Button onClick={openCreateModal} style={{ background: 'var(--income-gradient)' }}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Recorrência
         </Button>
@@ -196,7 +501,7 @@ const RecurringTransactions = () => {
               <p className="text-muted-foreground mb-6">
                 Crie transações recorrentes para automatizar suas finanças
               </p>
-              <Button style={{ background: 'var(--income-gradient)' }}>
+              <Button onClick={openCreateModal} style={{ background: 'var(--income-gradient)' }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Primeira Recorrência
               </Button>
@@ -265,13 +570,13 @@ const RecurringTransactions = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" size="sm" title="Executar agora">
+                          <Button variant="ghost" size="sm" title="Executar agora" onClick={() => handleExecuteNow(transaction)}>
                             <Play className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => openEditModal(transaction)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openPauseModal(transaction)}>
                             <Pause className="h-4 w-4" />
                           </Button>
                         </div>
@@ -330,10 +635,10 @@ const RecurringTransactions = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="sm" title="Reativar">
+                        <Button variant="ghost" size="sm" title="Reativar" onClick={() => handleReactivate(transaction)}>
                           <Play className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(transaction)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -345,6 +650,282 @@ const RecurringTransactions = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal para Nova Transação Recorrente */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Transação Recorrente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="type">Tipo</Label>
+                <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData({ ...formData, type: value, category_id: '' })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receita">Receita</SelectItem>
+                    <SelectItem value="despesa">Despesa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="value">Valor</Label>
+                <Input
+                  id="value"
+                  type="number"
+                  step="0.01"
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descrição da transação recorrente"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="category_id">Categoria</Label>
+                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="bank_account_id">Conta Bancária</Label>
+                <Select value={formData.bank_account_id} onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="frequency">Frequência</Label>
+                <Select value={formData.frequency} onValueChange={(value) => setFormData({ ...formData, frequency: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Frequência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Diário</SelectItem>
+                    <SelectItem value="weekly">Semanal</SelectItem>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="yearly">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="start_date">Data de Início</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end_date">Data de Fim (Opcional)</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} style={{ background: 'var(--income-gradient)' }}>
+              Criar Recorrência
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para Editar Transação Recorrente */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Transação Recorrente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-type">Tipo</Label>
+                <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData({ ...formData, type: value, category_id: '' })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receita">Receita</SelectItem>
+                    <SelectItem value="despesa">Despesa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-value">Valor</Label>
+                <Input
+                  id="edit-value"
+                  type="number"
+                  step="0.01"
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description">Descrição</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descrição da transação recorrente"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-category_id">Categoria</Label>
+                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-bank_account_id">Conta Bancária</Label>
+                <Select value={formData.bank_account_id} onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-frequency">Frequência</Label>
+                <Select value={formData.frequency} onValueChange={(value) => setFormData({ ...formData, frequency: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Frequência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Diário</SelectItem>
+                    <SelectItem value="weekly">Semanal</SelectItem>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="yearly">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-start_date">Data de Início</Label>
+                <Input
+                  id="edit-start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-end_date">Data de Fim (Opcional)</Label>
+                <Input
+                  id="edit-end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEdit} style={{ background: 'var(--income-gradient)' }}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a transação recorrente "{deletingTransaction?.description}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Confirmação de Pausa */}
+      <AlertDialog open={pauseModalOpen} onOpenChange={setPauseModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pausar Transação Recorrente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja pausar a transação recorrente "{pausingTransaction?.description}"?
+              Ela será movida para a lista de transações inativas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePause} className="bg-warning text-warning-foreground hover:bg-warning/90">
+              Pausar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

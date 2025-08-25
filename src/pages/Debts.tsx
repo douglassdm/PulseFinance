@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,6 +29,20 @@ const Debts = () => {
   const { user } = useAuth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
+  const [deletingDebt, setDeletingDebt] = useState<Debt | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    original_amount: '',
+    current_amount: '',
+    interest_rate: '',
+    due_date: '',
+    creditor: '',
+    description: ''
+  });
 
   useEffect(() => {
     if (user) {
@@ -77,6 +96,117 @@ const Debts = () => {
     return Math.max(0, Math.min(100, percentage));
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      original_amount: '',
+      current_amount: '',
+      interest_rate: '',
+      due_date: '',
+      creditor: '',
+      description: ''
+    });
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setCreateModalOpen(true);
+  };
+
+  const openEditModal = (debt: Debt) => {
+    setFormData({
+      name: debt.name,
+      original_amount: debt.original_amount.toString(),
+      current_amount: debt.current_amount.toString(),
+      interest_rate: debt.interest_rate?.toString() || '',
+      due_date: debt.due_date ? debt.due_date.split('T')[0] : '',
+      creditor: debt.creditor || '',
+      description: debt.description || ''
+    });
+    setEditingDebt(debt);
+    setEditModalOpen(true);
+  };
+
+  const openDeleteModal = (debt: Debt) => {
+    setDeletingDebt(debt);
+    setDeleteModalOpen(true);
+  };
+
+  const handleCreate = async () => {
+    if (!user || !formData.name.trim() || !formData.original_amount) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('debts')
+        .insert([{
+          user_id: user.id,
+          name: formData.name.trim(),
+          original_amount: parseFloat(formData.original_amount),
+          current_amount: parseFloat(formData.current_amount) || parseFloat(formData.original_amount),
+          interest_rate: formData.interest_rate ? parseFloat(formData.interest_rate) : null,
+          due_date: formData.due_date || null,
+          creditor: formData.creditor.trim() || null,
+          description: formData.description.trim() || null
+        }])
+        .select();
+
+      if (error) throw error;
+
+      await loadDebts();
+      setCreateModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao criar dívida:', error);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editingDebt || !formData.name.trim() || !formData.original_amount) return;
+
+    try {
+      const { error } = await supabase
+        .from('debts')
+        .update({
+          name: formData.name.trim(),
+          original_amount: parseFloat(formData.original_amount),
+          current_amount: parseFloat(formData.current_amount) || parseFloat(formData.original_amount),
+          interest_rate: formData.interest_rate ? parseFloat(formData.interest_rate) : null,
+          due_date: formData.due_date || null,
+          creditor: formData.creditor.trim() || null,
+          description: formData.description.trim() || null
+        })
+        .eq('id', editingDebt.id);
+
+      if (error) throw error;
+
+      await loadDebts();
+      setEditModalOpen(false);
+      setEditingDebt(null);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao editar dívida:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingDebt) return;
+
+    try {
+      const { error } = await supabase
+        .from('debts')
+        .delete()
+        .eq('id', deletingDebt.id);
+
+      if (error) throw error;
+
+      await loadDebts();
+      setDeleteModalOpen(false);
+      setDeletingDebt(null);
+    } catch (error) {
+      console.error('Erro ao deletar dívida:', error);
+    }
+  };
+
   const totalOriginal = debts.reduce((sum, debt) => sum + debt.original_amount, 0);
   const totalCurrent = debts.reduce((sum, debt) => sum + debt.current_amount, 0);
   const totalPaid = totalOriginal - totalCurrent;
@@ -114,7 +244,7 @@ const Debts = () => {
             Gerencie suas dívidas e acompanhe o progresso dos pagamentos
           </p>
         </div>
-        <Button style={{ background: 'var(--expense-gradient)' }}>
+        <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Dívida
         </Button>
@@ -168,7 +298,7 @@ const Debts = () => {
             <p className="text-muted-foreground text-center mb-6">
               Mantenha o controle das suas dívidas registrando-as aqui
             </p>
-            <Button style={{ background: 'var(--expense-gradient)' }}>
+            <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Dívida
             </Button>
@@ -194,10 +324,10 @@ const Debts = () => {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => openEditModal(debt)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(debt)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -276,6 +406,209 @@ const Debts = () => {
           })}
         </div>
       )}
+
+      {/* Modal para Nova Dívida */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Dívida</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nome da Dívida</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Cartão de Crédito"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="original_amount">Valor Original</Label>
+                <Input
+                  id="original_amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.original_amount}
+                  onChange={(e) => setFormData({ ...formData, original_amount: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="current_amount">Valor Atual</Label>
+                <Input
+                  id="current_amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.current_amount}
+                  onChange={(e) => setFormData({ ...formData, current_amount: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="interest_rate">Taxa de Juros (% ao ano)</Label>
+                <Input
+                  id="interest_rate"
+                  type="number"
+                  step="0.01"
+                  value={formData.interest_rate}
+                  onChange={(e) => setFormData({ ...formData, interest_rate: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="due_date">Data de Vencimento</Label>
+                <Input
+                  id="due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="creditor">Credor</Label>
+              <Input
+                id="creditor"
+                value={formData.creditor}
+                onChange={(e) => setFormData({ ...formData, creditor: e.target.value })}
+                placeholder="Ex: Banco XYZ"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Detalhes adicionais sobre a dívida"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} style={{ background: 'var(--expense-gradient)' }}>
+              Criar Dívida
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para Editar Dívida */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Dívida</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-name">Nome da Dívida</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Cartão de Crédito"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-original_amount">Valor Original</Label>
+                <Input
+                  id="edit-original_amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.original_amount}
+                  onChange={(e) => setFormData({ ...formData, original_amount: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-current_amount">Valor Atual</Label>
+                <Input
+                  id="edit-current_amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.current_amount}
+                  onChange={(e) => setFormData({ ...formData, current_amount: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-interest_rate">Taxa de Juros (% ao ano)</Label>
+                <Input
+                  id="edit-interest_rate"
+                  type="number"
+                  step="0.01"
+                  value={formData.interest_rate}
+                  onChange={(e) => setFormData({ ...formData, interest_rate: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-due_date">Data de Vencimento</Label>
+                <Input
+                  id="edit-due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-creditor">Credor</Label>
+              <Input
+                id="edit-creditor"
+                value={formData.creditor}
+                onChange={(e) => setFormData({ ...formData, creditor: e.target.value })}
+                placeholder="Ex: Banco XYZ"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description">Descrição</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Detalhes adicionais sobre a dívida"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEdit} style={{ background: 'var(--expense-gradient)' }}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a dívida "{deletingDebt?.name}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

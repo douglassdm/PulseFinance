@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +24,13 @@ const Categories = () => {
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    type: 'receita' as 'receita' | 'despesa'
+  });
 
   useEffect(() => {
     if (user) {
@@ -47,6 +59,93 @@ const Categories = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      type: 'receita'
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!user || !formData.name.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([{
+          user_id: user.id,
+          name: formData.name.trim(),
+          type: formData.type
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCategories(prev => [data, ...prev]);
+      setCreateModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!user || !editingCategory || !formData.name.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .update({
+          name: formData.name.trim(),
+          type: formData.type
+        })
+        .eq('id', editingCategory.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCategories(prev => prev.map(cat => cat.id === editingCategory.id ? data : cat));
+      setEditModalOpen(false);
+      setEditingCategory(null);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao editar categoria:', error);
+    }
+  };
+
+  const handleDelete = async (categoryId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+    } catch (error) {
+      console.error('Erro ao deletar categoria:', error);
+    }
+  };
+
+  const openEditModal = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      type: category.type
+    });
+    setEditModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setCreateModalOpen(true);
   };
 
   const incomeCategories = categories.filter(cat => cat.type === 'receita');
@@ -90,7 +189,7 @@ const Categories = () => {
           <p className="text-muted-foreground mb-6">
             Crie categorias para organizar melhor suas {type === 'receita' ? 'receitas' : 'despesas'}
           </p>
-          <Button style={{ background: type === 'receita' ? 'var(--income-gradient)' : 'var(--expense-gradient)' }}>
+          <Button style={{ background: type === 'receita' ? 'var(--income-gradient)' : 'var(--expense-gradient)' }} onClick={openCreateModal}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Categoria
           </Button>
@@ -115,12 +214,30 @@ const Categories = () => {
                     <h3 className="font-semibold">{category.name}</h3>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => openEditModal(category)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso irá deletar permanentemente a categoria "{category.name}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(category.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Deletar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
                 <Badge 
@@ -149,7 +266,7 @@ const Categories = () => {
             Organize suas transações em categorias personalizadas
           </p>
         </div>
-        <Button style={{ background: 'var(--income-gradient)' }}>
+        <Button style={{ background: 'var(--income-gradient)' }} onClick={openCreateModal}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Categoria
         </Button>
@@ -184,6 +301,102 @@ const Categories = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Modal de Criação */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Nova Categoria</DialogTitle>
+            <DialogDescription>
+              Crie uma nova categoria para organizar suas transações
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Nome *
+              </Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+                placeholder="Ex: Alimentação, Salário"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="type" className="text-right">
+                Tipo *
+              </Label>
+              <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="receita">Receita</SelectItem>
+                  <SelectItem value="despesa">Despesa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} disabled={!formData.name.trim()}>
+              Criar Categoria
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Categoria</DialogTitle>
+            <DialogDescription>
+              Altere os dados da categoria
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                Nome *
+              </Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+                placeholder="Ex: Alimentação, Salário"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-type" className="text-right">
+                Tipo *
+              </Label>
+              <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="receita">Receita</SelectItem>
+                  <SelectItem value="despesa">Despesa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEdit} disabled={!formData.name.trim()}>
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

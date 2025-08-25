@@ -42,35 +42,47 @@ All colors MUST be HSL.
     --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
     --success-light: 142 71% 45%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 98%;
-    
+
     --income: 142 76% 36%;
     --income-light: 142 71% 45%;
-    --income-gradient: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 71% 45%));
-    
+    --income-gradient: linear-gradient(
+      135deg,
+      hsl(142 76% 36%),
+      hsl(142 71% 45%)
+    );
+
     --expense: 0 84% 60%;
     --expense-light: 0 72% 50%;
     --expense-gradient: linear-gradient(135deg, hsl(0 84% 60%), hsl(0 72% 50%));
-    
+
     --investment: 262 83% 58%;
     --investment-light: 262 73% 65%;
-    --investment-gradient: linear-gradient(135deg, hsl(262 83% 58%), hsl(262 73% 65%));
-    
+    --investment-gradient: linear-gradient(
+      135deg,
+      hsl(262 83% 58%),
+      hsl(262 73% 65%)
+    );
+
     --goal: 220 91% 52%;
     --goal-light: 220 81% 60%;
-    --goal-gradient: linear-gradient(135deg, hsl(220 91% 52%), hsl(220 81% 60%));
-    
+    --goal-gradient: linear-gradient(
+      135deg,
+      hsl(220 91% 52%),
+      hsl(220 81% 60%)
+    );
+
     /* Backgrounds */
     --bg-gradient: linear-gradient(135deg, hsl(220 14% 96%), hsl(0 0% 100%));
     --card-gradient: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 14% 98%));
-    
+
     /* Shadows */
     --shadow-soft: 0 2px 8px -2px hsl(220 14% 85%);
     --shadow-medium: 0 8px 25px -8px hsl(220 14% 70%);
     --shadow-strong: 0 25px 50px -12px hsl(220 14% 50%);
-    
+
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -131,5 +143,25 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Sidebar specific styles */
+@layer components {
+  [data-sidebar="sidebar"] {
+    background-color: hsl(var(--sidebar-background));
+    color: hsl(var(--sidebar-foreground));
+    border-right: 1px solid hsl(var(--sidebar-border));
+  }
+
+  [data-sidebar="sidebar"] [data-sidebar="menu-button"][data-active="true"] {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+    font-weight: 500;
+  }
+
+  [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
   }
 }

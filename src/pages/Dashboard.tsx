@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -28,15 +33,39 @@ interface DashboardStats {
   recentTransactions: any[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+  type: 'receita' | 'despesa';
+}
+
+interface BankAccount {
+  id: string;
+  name: string;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const [transactionModalOpen, setTransactionModalOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [formData, setFormData] = useState({
+    type: 'receita' as 'receita' | 'despesa',
+    value: '',
+    description: '',
+    category_id: '',
+    bank_account_id: '',
+    transaction_date: new Date().toISOString().split('T')[0]
+  });
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
+      loadCategories();
+      loadBankAccounts();
     }
   }, [user]);
 
@@ -135,6 +164,80 @@ const Dashboard = () => {
     }
   };
 
+  const loadCategories = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, type')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
+
+  const loadBankAccounts = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('id, name')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setBankAccounts(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar contas bancárias:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      type: 'receita',
+      value: '',
+      description: '',
+      category_id: '',
+      bank_account_id: '',
+      transaction_date: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleCreateTransaction = async () => {
+    if (!user || !formData.value.trim() || !formData.bank_account_id || !formData.transaction_date) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .insert([{
+          user_id: user.id,
+          type: formData.type,
+          value: parseFloat(formData.value),
+          description: formData.description.trim() || null,
+          category_id: formData.category_id || null,
+          bank_account_id: formData.bank_account_id,
+          transaction_date: formData.transaction_date
+        }]);
+
+      if (error) throw error;
+
+      setTransactionModalOpen(false);
+      resetForm();
+      loadDashboardData();
+    } catch (error) {
+      console.error('Erro ao criar transação:', error);
+    }
+  };
+
+  const openTransactionModal = () => {
+    resetForm();
+    setTransactionModalOpen(true);
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -183,7 +286,7 @@ const Dashboard = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={openTransactionModal}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Transação
           </Button>
@@ -340,6 +443,117 @@ const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Nova Transação */}
+      <Dialog open={transactionModalOpen} onOpenChange={setTransactionModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Nova Transação</DialogTitle>
+            <DialogDescription>
+              Registre uma nova transação financeira
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="type" className="text-right">
+                Tipo *
+              </Label>
+              <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="receita">Receita</SelectItem>
+                  <SelectItem value="despesa">Despesa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="value" className="text-right">
+                Valor *
+              </Label>
+              <Input
+                id="value"
+                type="number"
+                step="0.01"
+                value={formData.value}
+                onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+                className="col-span-3"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Descrição
+              </Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                className="col-span-3"
+                placeholder="Descrição da transação"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Categoria
+              </Label>
+              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.filter(cat => cat.type === formData.type).map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="bank_account" className="text-right">
+                Conta Bancária *
+              </Label>
+              <Select value={formData.bank_account_id} onValueChange={(value) => setFormData(prev => ({ ...prev, bank_account_id: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione uma conta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="transaction_date" className="text-right">
+                Data *
+              </Label>
+              <Input
+                id="transaction_date"
+                type="date"
+                value={formData.transaction_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, transaction_date: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransactionModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateTransaction} 
+              disabled={!formData.value.trim() || !formData.bank_account_id || !formData.transaction_date}
+            >
+              Criar Transação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
