@@ -9,8 +9,8 @@ CREATE TABLE public.account_balances_history (
   balance_value numeric NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT account_balances_history_pkey PRIMARY KEY (id),
-  CONSTRAINT account_balances_history_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_accounts(id),
-  CONSTRAINT account_balances_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+  CONSTRAINT account_balances_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT account_balances_history_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_accounts(id)
 );
 CREATE TABLE public.bank_accounts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -60,8 +60,8 @@ CREATE TABLE public.financial_goals (
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   current_value numeric,
   CONSTRAINT financial_goals_pkey PRIMARY KEY (id),
-  CONSTRAINT financial_goals_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
-  CONSTRAINT financial_goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+  CONSTRAINT financial_goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT financial_goals_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
 );
 CREATE TABLE public.goal_progress (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -75,6 +75,22 @@ CREATE TABLE public.goal_progress (
   CONSTRAINT goal_progress_pkey PRIMARY KEY (id),
   CONSTRAINT goal_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
   CONSTRAINT goal_progress_goal_id_fkey FOREIGN KEY (goal_id) REFERENCES public.financial_goals(id)
+);
+CREATE TABLE public.investment_transactions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  investment_id uuid NOT NULL,
+  transaction_type USER-DEFINED NOT NULL,
+  transaction_date date NOT NULL,
+  quantity numeric,
+  price_per_unit numeric,
+  total_amount numeric NOT NULL,
+  fees numeric NOT NULL DEFAULT 0.00,
+  taxes numeric NOT NULL DEFAULT 0.00,
+  description text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT investment_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT investment_transactions_investment_id_fkey FOREIGN KEY (investment_id) REFERENCES public.investments(id)
 );
 CREATE TABLE public.investments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -91,6 +107,9 @@ CREATE TABLE public.investments (
   quantity numeric NOT NULL DEFAULT 0.00000000,
   brokerage text,
   currency text NOT NULL DEFAULT 'BRL'::text,
+  average_purchase_price numeric DEFAULT 0.0000,
+  current_market_price numeric,
+  last_price_update timestamp with time zone,
   CONSTRAINT investments_pkey PRIMARY KEY (id),
   CONSTRAINT investments_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
@@ -118,9 +137,9 @@ CREATE TABLE public.recurring_transactions (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT recurring_transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT recurring_transactions_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_accounts(id),
+  CONSTRAINT recurring_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
   CONSTRAINT recurring_transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
-  CONSTRAINT recurring_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+  CONSTRAINT recurring_transactions_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_accounts(id)
 );
 CREATE TABLE public.tags (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -151,7 +170,7 @@ CREATE TABLE public.transactions (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT transactions_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_accounts(id),
   CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
-  CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
+  CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
+  CONSTRAINT transactions_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_accounts(id)
 );

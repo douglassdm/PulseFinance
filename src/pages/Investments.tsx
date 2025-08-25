@@ -1,24 +1,61 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, TrendingUp, PiggyBank, History, ArrowUpDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  TrendingUp,
+  PiggyBank,
+  History,
+  ArrowUpDown,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Investment {
   id: string;
   name: string;
   symbol: string | null;
-  type: 'acao' | 'fundo' | 'criptomoeda' | 'renda_fixa' | 'outros';
+  type: "acao" | "fundo" | "criptomoeda" | "renda_fixa" | "outros";
   quantity: number;
   initial_amount: number;
   current_amount: number;
@@ -36,7 +73,16 @@ interface Investment {
 interface InvestmentTransaction {
   id: string;
   investment_id: string;
-  transaction_type: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'FEE' | 'SPLIT' | 'BONUS' | 'OTHER';
+  transaction_type:
+    | "BUY"
+    | "SELL"
+    | "DIVIDEND"
+    | "DEPOSIT"
+    | "WITHDRAWAL"
+    | "FEE"
+    | "SPLIT"
+    | "BONUS"
+    | "OTHER";
   transaction_date: string;
   quantity?: number;
   price_per_unit?: number;
@@ -49,23 +95,23 @@ interface InvestmentTransaction {
 }
 
 const investmentTypeLabels = {
-  acao: 'Ações',
-  fundo: 'Fundos',
-  criptomoeda: 'Criptomoedas',
-  renda_fixa: 'Renda Fixa',
-  outros: 'Outros'
+  acao: "Ações",
+  fundo: "Fundos",
+  criptomoeda: "Criptomoedas",
+  renda_fixa: "Renda Fixa",
+  outros: "Outros",
 };
 
 const transactionTypeLabels = {
-  BUY: 'Compra',
-  SELL: 'Venda',
-  DIVIDEND: 'Dividendo',
-  DEPOSIT: 'Depósito',
-  WITHDRAWAL: 'Retirada',
-  FEE: 'Taxa',
-  SPLIT: 'Desdobramento',
-  BONUS: 'Bonificação',
-  OTHER: 'Outros'
+  BUY: "Compra",
+  SELL: "Venda",
+  DIVIDEND: "Dividendo",
+  DEPOSIT: "Depósito",
+  WITHDRAWAL: "Retirada",
+  FEE: "Taxa",
+  SPLIT: "Desdobramento",
+  BONUS: "Bonificação",
+  OTHER: "Outros",
 };
 
 const Investments = () => {
@@ -77,36 +123,51 @@ const Investments = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [transactionModalOpen, setTransactionModalOpen] = useState(false);
   const [transactionsViewOpen, setTransactionsViewOpen] = useState(false);
-  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
-  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
+  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(
+    null
+  );
+  const [selectedInvestment, setSelectedInvestment] =
+    useState<Investment | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    name: '',
-    symbol: '',
-    type: 'acao' as 'acao' | 'fundo' | 'criptomoeda' | 'renda_fixa' | 'outros',
-    quantity: '',
-    initial_amount: '',
-    current_amount: '',
-    purchase_date: new Date().toISOString().split('T')[0],
-    brokerage: '',
-    currency: 'BRL',
-    description: ''
+    name: "",
+    symbol: "",
+    type: "acao" as "acao" | "fundo" | "criptomoeda" | "renda_fixa" | "outros",
+    quantity: "",
+    initial_amount: "",
+    current_amount: "",
+    purchase_date: new Date().toISOString().split("T")[0],
+    brokerage: "",
+    currency: "BRL",
+    description: "",
   });
 
   const [transactionFormData, setTransactionFormData] = useState({
-    transaction_type: 'BUY' as 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'FEE' | 'SPLIT' | 'BONUS' | 'OTHER',
-    transaction_date: new Date().toISOString().split('T')[0],
-    quantity: '',
-    price_per_unit: '',
-    total_amount: '',
-    fees: '0',
-    taxes: '0',
-    description: ''
+    transaction_type: "BUY" as
+      | "BUY"
+      | "SELL"
+      | "DIVIDEND"
+      | "DEPOSIT"
+      | "WITHDRAWAL"
+      | "FEE"
+      | "SPLIT"
+      | "BONUS"
+      | "OTHER",
+    transaction_date: new Date().toISOString().split("T")[0],
+    quantity: "",
+    price_per_unit: "",
+    total_amount: "",
+    fees: "0",
+    taxes: "0",
+    description: "",
+    bank_account_id: "",
   });
 
   useEffect(() => {
     if (user) {
       loadInvestments();
       loadTransactions();
+      loadBankAccounts();
     }
   }, [user]);
 
@@ -115,15 +176,15 @@ const Investments = () => {
 
     try {
       const { data, error } = await supabase
-        .from('investments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("investments")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setInvestments(data || []);
     } catch (error) {
-      console.error('Erro ao carregar investimentos:', error);
+      console.error("Erro ao carregar investimentos:", error);
     } finally {
       setLoading(false);
     }
@@ -134,33 +195,52 @@ const Investments = () => {
 
     try {
       const { data, error } = await supabase
-        .from('investment_transactions')
-        .select(`
+        .from("investment_transactions")
+        .select(
+          `
           *,
           investments!inner(
             name,
             user_id
           )
-        `)
-        .eq('investments.user_id', user.id)
-        .order('transaction_date', { ascending: false });
+        `
+        )
+        .eq("investments.user_id", user.id)
+        .order("transaction_date", { ascending: false });
 
       if (error) throw error;
       setTransactions(data || []);
     } catch (error) {
-      console.error('Erro ao carregar transações:', error);
+      console.error("Erro ao carregar transações:", error);
+    }
+  };
+
+  const loadBankAccounts = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("bank_accounts")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("name");
+
+      if (error) throw error;
+      setBankAccounts(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar contas bancárias:", error);
     }
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   const calculateReturn = (initial: number, current: number) => {
@@ -191,50 +271,63 @@ const Investments = () => {
   };
 
   const formatQuantity = (quantity: number) => {
-    return quantity.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 8 });
+    return quantity.toLocaleString("pt-BR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 8,
+    });
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      symbol: '',
-      type: 'acao',
-      quantity: '',
-      initial_amount: '',
-      current_amount: '',
-      purchase_date: new Date().toISOString().split('T')[0],
-      brokerage: '',
-      currency: 'BRL',
-      description: ''
+      name: "",
+      symbol: "",
+      type: "acao",
+      quantity: "",
+      initial_amount: "",
+      current_amount: "",
+      purchase_date: new Date().toISOString().split("T")[0],
+      brokerage: "",
+      currency: "BRL",
+      description: "",
     });
   };
 
   const handleCreate = async () => {
-    if (!user || !formData.name.trim() || !formData.quantity.trim() || !formData.initial_amount.trim()) return;
+    if (
+      !user ||
+      !formData.name.trim() ||
+      !formData.quantity.trim() ||
+      !formData.initial_amount.trim()
+    )
+      return;
 
     try {
       const quantity = parseFloat(formData.quantity);
       const initialAmount = parseFloat(formData.initial_amount);
-      const currentAmount = formData.current_amount ? parseFloat(formData.current_amount) : initialAmount;
+      const currentAmount = formData.current_amount
+        ? parseFloat(formData.current_amount)
+        : initialAmount;
       const pricePerUnit = quantity > 0 ? initialAmount / quantity : 0;
 
       // Primeiro, criar o investimento
       const { data: investmentData, error: investmentError } = await supabase
-        .from('investments')
-        .insert([{
-          user_id: user.id,
-          name: formData.name.trim(),
-          symbol: formData.symbol.trim() || null,
-          type: formData.type,
-          quantity: quantity,
-          initial_amount: initialAmount,
-          current_amount: currentAmount,
-          purchase_date: formData.purchase_date,
-          brokerage: formData.brokerage.trim() || null,
-          currency: formData.currency,
-          description: formData.description.trim() || null,
-          average_purchase_price: pricePerUnit
-        }])
+        .from("investments")
+        .insert([
+          {
+            user_id: user.id,
+            name: formData.name.trim(),
+            symbol: formData.symbol.trim() || null,
+            type: formData.type,
+            quantity: quantity,
+            initial_amount: initialAmount,
+            current_amount: currentAmount,
+            purchase_date: formData.purchase_date,
+            brokerage: formData.brokerage.trim() || null,
+            currency: formData.currency,
+            description: formData.description.trim() || null,
+            average_purchase_price: pricePerUnit,
+          },
+        ])
         .select()
         .single();
 
@@ -242,42 +335,53 @@ const Investments = () => {
 
       // Depois, criar a transação inicial de compra
       const { error: transactionError } = await supabase
-        .from('investment_transactions')
-        .insert([{
-          investment_id: investmentData.id,
-          transaction_type: 'BUY',
-          transaction_date: formData.purchase_date,
-          quantity: quantity,
-          price_per_unit: pricePerUnit,
-          total_amount: initialAmount,
-          fees: 0,
-          taxes: 0,
-          description: 'Compra inicial do investimento'
-        }]);
+        .from("investment_transactions")
+        .insert([
+          {
+            investment_id: investmentData.id,
+            transaction_type: "BUY",
+            transaction_date: formData.purchase_date,
+            quantity: quantity,
+            price_per_unit: pricePerUnit,
+            total_amount: initialAmount,
+            fees: 0,
+            taxes: 0,
+            description: "Compra inicial do investimento",
+          },
+        ]);
 
       if (transactionError) throw transactionError;
 
       // Atualizar listas
-      setInvestments(prev => [investmentData, ...prev]);
+      setInvestments((prev) => [investmentData, ...prev]);
       loadTransactions(); // Recarregar transações para incluir a nova
-      
+
       setCreateModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error('Erro ao criar investimento:', error);
+      console.error("Erro ao criar investimento:", error);
     }
   };
 
   const handleEdit = async () => {
-    if (!user || !editingInvestment || !formData.name.trim() || !formData.quantity.trim() || !formData.initial_amount.trim()) return;
+    if (
+      !user ||
+      !editingInvestment ||
+      !formData.name.trim() ||
+      !formData.quantity.trim() ||
+      !formData.initial_amount.trim()
+    )
+      return;
 
     try {
       const quantity = parseFloat(formData.quantity);
       const initialAmount = parseFloat(formData.initial_amount);
-      const currentAmount = formData.current_amount ? parseFloat(formData.current_amount) : initialAmount;
+      const currentAmount = formData.current_amount
+        ? parseFloat(formData.current_amount)
+        : initialAmount;
 
       const { data, error } = await supabase
-        .from('investments')
+        .from("investments")
         .update({
           name: formData.name.trim(),
           symbol: formData.symbol.trim() || null,
@@ -288,20 +392,22 @@ const Investments = () => {
           purchase_date: formData.purchase_date,
           brokerage: formData.brokerage.trim() || null,
           currency: formData.currency,
-          description: formData.description.trim() || null
+          description: formData.description.trim() || null,
         })
-        .eq('id', editingInvestment.id)
+        .eq("id", editingInvestment.id)
         .select()
         .single();
 
       if (error) throw error;
 
-      setInvestments(prev => prev.map(inv => inv.id === editingInvestment.id ? data : inv));
+      setInvestments((prev) =>
+        prev.map((inv) => (inv.id === editingInvestment.id ? data : inv))
+      );
       setEditModalOpen(false);
       setEditingInvestment(null);
       resetForm();
     } catch (error) {
-      console.error('Erro ao editar investimento:', error);
+      console.error("Erro ao editar investimento:", error);
     }
   };
 
@@ -310,15 +416,15 @@ const Investments = () => {
 
     try {
       const { error } = await supabase
-        .from('investments')
+        .from("investments")
         .delete()
-        .eq('id', investmentId);
+        .eq("id", investmentId);
 
       if (error) throw error;
 
-      setInvestments(prev => prev.filter(inv => inv.id !== investmentId));
+      setInvestments((prev) => prev.filter((inv) => inv.id !== investmentId));
     } catch (error) {
-      console.error('Erro ao deletar investimento:', error);
+      console.error("Erro ao deletar investimento:", error);
     }
   };
 
@@ -326,15 +432,15 @@ const Investments = () => {
     setEditingInvestment(investment);
     setFormData({
       name: investment.name,
-      symbol: investment.symbol || '',
+      symbol: investment.symbol || "",
       type: investment.type,
-      quantity: investment.quantity?.toString() || '1',
+      quantity: investment.quantity?.toString() || "1",
       initial_amount: investment.initial_amount.toString(),
       current_amount: investment.current_amount.toString(),
       purchase_date: investment.purchase_date,
-      brokerage: investment.brokerage || '',
-      currency: investment.currency || 'BRL',
-      description: investment.description || ''
+      brokerage: investment.brokerage || "",
+      currency: investment.currency || "BRL",
+      description: investment.description || "",
     });
     setEditModalOpen(true);
   };
@@ -347,14 +453,15 @@ const Investments = () => {
   const openTransactionModal = (investment: Investment) => {
     setSelectedInvestment(investment);
     setTransactionFormData({
-      transaction_type: 'BUY',
-      transaction_date: new Date().toISOString().split('T')[0],
-      quantity: '',
-      price_per_unit: '',
-      total_amount: '',
-      fees: '0',
-      taxes: '0',
-      description: ''
+      transaction_type: "BUY",
+      transaction_date: new Date().toISOString().split("T")[0],
+      quantity: "",
+      price_per_unit: "",
+      total_amount: "",
+      fees: "0",
+      taxes: "0",
+      description: "",
+      bank_account_id: bankAccounts.length > 0 ? bankAccounts[0].id : "",
     });
     setTransactionModalOpen(true);
   };
@@ -366,60 +473,258 @@ const Investments = () => {
 
   const resetTransactionForm = () => {
     setTransactionFormData({
-      transaction_type: 'BUY',
-      transaction_date: new Date().toISOString().split('T')[0],
-      quantity: '',
-      price_per_unit: '',
-      total_amount: '',
-      fees: '0',
-      taxes: '0',
-      description: ''
+      transaction_type: "BUY",
+      transaction_date: new Date().toISOString().split("T")[0],
+      quantity: "",
+      price_per_unit: "",
+      total_amount: "",
+      fees: "0",
+      taxes: "0",
+      description: "",
+      bank_account_id: bankAccounts.length > 0 ? bankAccounts[0].id : "",
     });
   };
 
   const handleCreateTransaction = async () => {
-    if (!user || !selectedInvestment || !transactionFormData.total_amount.trim()) return;
+    if (
+      !user ||
+      !selectedInvestment ||
+      !transactionFormData.total_amount.trim() ||
+      !transactionFormData.bank_account_id
+    )
+      return;
 
     try {
+      const quantity = transactionFormData.quantity
+        ? parseFloat(transactionFormData.quantity)
+        : null;
+      const pricePerUnit = transactionFormData.price_per_unit
+        ? parseFloat(transactionFormData.price_per_unit)
+        : null;
+      const totalAmount = parseFloat(transactionFormData.total_amount);
+      const fees = parseFloat(transactionFormData.fees);
+      const taxes = parseFloat(transactionFormData.taxes);
+
       const transactionData = {
         investment_id: selectedInvestment.id,
         transaction_type: transactionFormData.transaction_type,
         transaction_date: transactionFormData.transaction_date,
-        quantity: transactionFormData.quantity ? parseFloat(transactionFormData.quantity) : null,
-        price_per_unit: transactionFormData.price_per_unit ? parseFloat(transactionFormData.price_per_unit) : null,
-        total_amount: parseFloat(transactionFormData.total_amount),
-        fees: parseFloat(transactionFormData.fees),
-        taxes: parseFloat(transactionFormData.taxes),
-        description: transactionFormData.description.trim() || null
+        quantity: quantity,
+        price_per_unit: pricePerUnit,
+        total_amount: totalAmount,
+        fees: fees,
+        taxes: taxes,
+        description: transactionFormData.description.trim() || null,
       };
 
-      const { data, error } = await supabase
-        .from('investment_transactions')
-        .insert([transactionData])
-        .select()
-        .single();
+      // Criar a transação de investimento
+      const { data: investmentTransaction, error: investmentError } =
+        await supabase
+          .from("investment_transactions")
+          .insert([transactionData])
+          .select()
+          .single();
 
-      if (error) throw error;
+      if (investmentError) throw investmentError;
 
-      // Atualizar lista de transações
+      // Criar a transação financeira correspondente
+      await createFinancialTransaction(transactionData, selectedInvestment);
+
+      // Atualizar o investimento baseado na transação
+      await updateInvestmentFromTransaction(
+        selectedInvestment,
+        transactionData
+      );
+
+      // Atualizar listas
       loadTransactions();
-      
-      // Atualizar investimentos para refletir mudanças
       loadInvestments();
-      
+
       setTransactionModalOpen(false);
       resetTransactionForm();
     } catch (error) {
-      console.error('Erro ao criar transação:', error);
+      console.error("Erro ao criar transação:", error);
+    }
+  };
+
+  const createFinancialTransaction = async (
+    investmentTransaction: any,
+    investment: Investment
+  ) => {
+    if (!transactionFormData.bank_account_id) return;
+
+    try {
+      let transactionType: "receita" | "despesa";
+      let transactionValue = investmentTransaction.total_amount;
+      let transactionDescription = "";
+
+      switch (investmentTransaction.transaction_type) {
+        case "BUY":
+          transactionType = "despesa";
+          transactionDescription = `Compra de ${investment.name}`;
+          // Incluir taxas no valor total da despesa
+          transactionValue =
+            transactionValue +
+            investmentTransaction.fees +
+            investmentTransaction.taxes;
+          break;
+
+        case "SELL":
+          transactionType = "receita";
+          transactionDescription = `Venda de ${investment.name}`;
+          // Subtrair taxas do valor da receita
+          transactionValue =
+            transactionValue -
+            investmentTransaction.fees -
+            investmentTransaction.taxes;
+          break;
+
+        case "DIVIDEND":
+          transactionType = "receita";
+          transactionDescription = `Dividendos de ${investment.name}`;
+          // Subtrair impostos do valor da receita
+          transactionValue = transactionValue - investmentTransaction.taxes;
+          break;
+
+        case "DEPOSIT":
+          transactionType = "despesa";
+          transactionDescription = `Depósito para investimento em ${investment.name}`;
+          break;
+
+        case "WITHDRAWAL":
+          transactionType = "receita";
+          transactionDescription = `Retirada de investimento em ${investment.name}`;
+          break;
+
+        case "FEE":
+          transactionType = "despesa";
+          transactionDescription = `Taxa de ${investment.name}`;
+          break;
+
+        default:
+          // Para SPLIT, BONUS, OTHER não criar transação financeira
+          return;
+      }
+
+      // Adicionar descrição personalizada se fornecida
+      if (investmentTransaction.description) {
+        transactionDescription += ` - ${investmentTransaction.description}`;
+      }
+
+      const financialTransactionData = {
+        user_id: user.id,
+        type: transactionType,
+        value: Math.abs(transactionValue),
+        description: transactionDescription,
+        bank_account_id: transactionFormData.bank_account_id,
+        transaction_date: investmentTransaction.transaction_date,
+        category_id: null, // Pode ser configurado para uma categoria específica de investimentos
+      };
+
+      const { error: financialError } = await supabase
+        .from("transactions")
+        .insert([financialTransactionData]);
+
+      if (financialError) throw financialError;
+    } catch (error) {
+      console.error("Erro ao criar transação financeira:", error);
+      throw error;
+    }
+  };
+
+  const updateInvestmentFromTransaction = async (
+    investment: Investment,
+    transaction: any
+  ) => {
+    try {
+      let newQuantity = investment.quantity;
+      let newCurrentAmount = investment.current_amount;
+      let newAveragePrice =
+        investment.average_purchase_price ||
+        getAveragePurchasePrice(investment);
+
+      switch (transaction.transaction_type) {
+        case "BUY":
+          if (transaction.quantity && transaction.price_per_unit) {
+            // Atualizar quantidade
+            const oldQuantity = newQuantity;
+            newQuantity += transaction.quantity;
+
+            // Calcular novo preço médio
+            const oldTotalCost = oldQuantity * newAveragePrice;
+            const newTotalCost = oldTotalCost + transaction.total_amount;
+            newAveragePrice = newQuantity > 0 ? newTotalCost / newQuantity : 0;
+
+            // Atualizar valor atual (assumindo mesmo preço de compra se não tiver preço de mercado)
+            if (!investment.current_market_price) {
+              newCurrentAmount = newQuantity * newAveragePrice;
+            }
+          }
+          break;
+
+        case "SELL":
+          if (transaction.quantity) {
+            newQuantity -= transaction.quantity;
+
+            // Manter preço médio, apenas reduzir quantidade
+            if (!investment.current_market_price && newQuantity > 0) {
+              newCurrentAmount = newQuantity * newAveragePrice;
+            } else if (newQuantity <= 0) {
+              newCurrentAmount = 0;
+              newQuantity = 0;
+            }
+          }
+          break;
+
+        case "DIVIDEND":
+          // Dividendos não afetam quantidade ou preço médio, apenas registram o recebimento
+          break;
+
+        case "SPLIT":
+          if (transaction.quantity) {
+            // Desdobramento: aumenta quantidade, reduz preço proporcionalmente
+            const splitRatio = transaction.quantity; // Assumindo que quantity representa a proporção
+            newQuantity *= splitRatio;
+            newAveragePrice /= splitRatio;
+
+            if (!investment.current_market_price) {
+              newCurrentAmount = newQuantity * newAveragePrice;
+            }
+          }
+          break;
+
+        default:
+          // Para outros tipos (DEPOSIT, WITHDRAWAL, FEE, BONUS, OTHER), apenas registrar
+          break;
+      }
+
+      // Atualizar o investimento no banco
+      await supabase
+        .from("investments")
+        .update({
+          quantity: Math.max(0, newQuantity),
+          current_amount: Math.max(0, newCurrentAmount),
+          average_purchase_price: newAveragePrice,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", investment.id);
+    } catch (error) {
+      console.error("Erro ao atualizar investimento:", error);
     }
   };
 
   const getInvestmentTransactions = (investmentId: string) => {
-    return transactions.filter(t => t.investment_id === investmentId);
+    return transactions.filter((t) => t.investment_id === investmentId);
   };
 
-  const totalInvested = investments.reduce((sum, inv) => sum + inv.initial_amount, 0);
-  const totalCurrent = investments.reduce((sum, inv) => sum + calculateCurrentValue(inv), 0);
+  const totalInvested = investments.reduce(
+    (sum, inv) => sum + inv.initial_amount,
+    0
+  );
+  const totalCurrent = investments.reduce(
+    (sum, inv) => sum + calculateCurrentValue(inv),
+    0
+  );
   const totalReturn = calculateReturn(totalInvested, totalCurrent);
 
   if (loading) {
@@ -455,7 +760,10 @@ const Investments = () => {
             Acompanhe a performance dos seus investimentos
           </p>
         </div>
-        <Button style={{ background: 'var(--investment-gradient)' }} onClick={openCreateModal}>
+        <Button
+          style={{ background: "var(--investment-gradient)" }}
+          onClick={openCreateModal}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Novo Investimento
         </Button>
@@ -463,9 +771,16 @@ const Investments = () => {
 
       {/* Resumo dos Investimentos */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card style={{ background: 'var(--investment-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--investment-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Total Investido</CardTitle>
+            <CardTitle className="text-sm font-medium text-white">
+              Total Investido
+            </CardTitle>
             <PiggyBank className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
@@ -475,7 +790,12 @@ const Investments = () => {
           </CardContent>
         </Card>
 
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Atual</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -487,17 +807,36 @@ const Investments = () => {
           </CardContent>
         </Card>
 
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rentabilidade</CardTitle>
-            <TrendingUp className={`h-4 w-4 ${totalReturn.returnValue >= 0 ? 'text-success' : 'text-expense'}`} />
+            <TrendingUp
+              className={`h-4 w-4 ${
+                totalReturn.returnValue >= 0 ? "text-success" : "text-expense"
+              }`}
+            />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totalReturn.returnValue >= 0 ? 'text-success' : 'text-expense'}`}>
-              {totalReturn.returnValue >= 0 ? '+' : ''}{formatCurrency(totalReturn.returnValue)}
+            <div
+              className={`text-2xl font-bold ${
+                totalReturn.returnValue >= 0 ? "text-success" : "text-expense"
+              }`}
+            >
+              {totalReturn.returnValue >= 0 ? "+" : ""}
+              {formatCurrency(totalReturn.returnValue)}
             </div>
-            <p className={`text-xs ${totalReturn.returnValue >= 0 ? 'text-success' : 'text-expense'}`}>
-              {totalReturn.returnPercentage >= 0 ? '+' : ''}{totalReturn.returnPercentage.toFixed(2)}%
+            <p
+              className={`text-xs ${
+                totalReturn.returnValue >= 0 ? "text-success" : "text-expense"
+              }`}
+            >
+              {totalReturn.returnPercentage >= 0 ? "+" : ""}
+              {totalReturn.returnPercentage.toFixed(2)}%
             </p>
           </CardContent>
         </Card>
@@ -505,14 +844,25 @@ const Investments = () => {
 
       {/* Lista de Investimentos */}
       {investments.length === 0 ? (
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardContent className="flex flex-col items-center justify-center py-16">
             <PiggyBank className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum investimento cadastrado</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Nenhum investimento cadastrado
+            </h3>
             <p className="text-muted-foreground text-center mb-6">
-              Comece a registrar seus investimentos para acompanhar sua rentabilidade
+              Comece a registrar seus investimentos para acompanhar sua
+              rentabilidade
             </p>
-            <Button style={{ background: 'var(--investment-gradient)' }} onClick={openCreateModal}>
+            <Button
+              style={{ background: "var(--investment-gradient)" }}
+              onClick={openCreateModal}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Primeiro Investimento
             </Button>
@@ -521,14 +871,27 @@ const Investments = () => {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {investments.map((investment) => {
-            const returnData = calculateReturn(investment.initial_amount, calculateCurrentValue(investment));
+            const returnData = calculateReturn(
+              investment.initial_amount,
+              calculateCurrentValue(investment)
+            );
             return (
-              <Card key={investment.id} style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+              <Card
+                key={investment.id}
+                style={{
+                  background: "var(--card-gradient)",
+                  boxShadow: "var(--shadow-soft)",
+                }}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div className="space-y-1">
                     <CardTitle className="text-lg">
                       {investment.name}
-                      {investment.symbol && <span className="text-sm text-muted-foreground ml-2">({investment.symbol})</span>}
+                      {investment.symbol && (
+                        <span className="text-sm text-muted-foreground ml-2">
+                          ({investment.symbol})
+                        </span>
+                      )}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
@@ -542,18 +905,36 @@ const Investments = () => {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => openTransactionsView(investment)} title="Ver transações">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openTransactionsView(investment)}
+                      title="Ver transações"
+                    >
                       <History className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openTransactionModal(investment)} title="Nova transação">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openTransactionModal(investment)}
+                      title="Nova transação"
+                    >
                       <ArrowUpDown className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openEditModal(investment)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditModal(investment)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -561,12 +942,16 @@ const Investments = () => {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta ação não pode ser desfeita. Isso irá deletar permanentemente o investimento "{investment.name}".
+                            Esta ação não pode ser desfeita. Isso irá deletar
+                            permanentemente o investimento "{investment.name}".
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(investment.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          <AlertDialogAction
+                            onClick={() => handleDelete(investment.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
                             Deletar
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -579,54 +964,84 @@ const Investments = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Quantidade</p>
-                        <p className="font-semibold">{formatQuantity(investment.quantity || 0)}</p>
+                        <p className="font-semibold">
+                          {formatQuantity(investment.quantity || 0)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Preço Médio</p>
-                        <p className="font-semibold">{formatCurrency(getAveragePurchasePrice(investment))}</p>
+                        <p className="font-semibold">
+                          {formatCurrency(getAveragePurchasePrice(investment))}
+                        </p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Preço Atual</p>
                         <p className="font-semibold">
-                          {investment.current_market_price ? 
-                            formatCurrency(investment.current_market_price) : 
-                            <span className="text-muted-foreground text-xs">N/A</span>
-                          }
-                          {investment.currency !== 'BRL' && investment.current_market_price && (
-                            <span className="text-xs text-muted-foreground ml-1">({investment.currency})</span>
+                          {investment.current_market_price ? (
+                            formatCurrency(investment.current_market_price)
+                          ) : (
+                            <span className="text-muted-foreground text-xs">
+                              N/A
+                            </span>
                           )}
+                          {investment.currency !== "BRL" &&
+                            investment.current_market_price && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({investment.currency})
+                              </span>
+                            )}
                         </p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Valor Total</p>
                         <p className="font-semibold">
                           {formatCurrency(calculateCurrentValue(investment))}
-                          {investment.currency !== 'BRL' && (
-                            <span className="text-xs text-muted-foreground ml-1">({investment.currency})</span>
+                          {investment.currency !== "BRL" && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({investment.currency})
+                            </span>
                           )}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-muted-foreground">Rentabilidade</span>
-                        <span className={`text-sm font-semibold ${returnData.returnValue >= 0 ? 'text-success' : 'text-expense'}`}>
-                          {returnData.returnValue >= 0 ? '+' : ''}{returnData.returnPercentage.toFixed(2)}%
+                        <span className="text-sm text-muted-foreground">
+                          Rentabilidade
+                        </span>
+                        <span
+                          className={`text-sm font-semibold ${
+                            returnData.returnValue >= 0
+                              ? "text-success"
+                              : "text-expense"
+                          }`}
+                        >
+                          {returnData.returnValue >= 0 ? "+" : ""}
+                          {returnData.returnPercentage.toFixed(2)}%
                         </span>
                       </div>
-                      <Progress 
-                        value={Math.abs(returnData.returnPercentage)} 
+                      <Progress
+                        value={Math.abs(returnData.returnPercentage)}
                         className="h-2"
                       />
-                      <p className={`text-xs mt-1 ${returnData.returnValue >= 0 ? 'text-success' : 'text-expense'}`}>
-                        {returnData.returnValue >= 0 ? '+' : ''}{formatCurrency(returnData.returnValue)}
+                      <p
+                        className={`text-xs mt-1 ${
+                          returnData.returnValue >= 0
+                            ? "text-success"
+                            : "text-expense"
+                        }`}
+                      >
+                        {returnData.returnValue >= 0 ? "+" : ""}
+                        {formatCurrency(returnData.returnValue)}
                       </p>
                     </div>
 
                     <div className="text-xs text-muted-foreground">
                       <p>Comprado em: {formatDate(investment.purchase_date)}</p>
-                      {investment.description && <p className="mt-1">{investment.description}</p>}
+                      {investment.description && (
+                        <p className="mt-1">{investment.description}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -653,7 +1068,9 @@ const Investments = () => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="col-span-3"
                 placeholder="Ex: Tesouro Direto IPCA+"
               />
@@ -665,7 +1082,9 @@ const Investments = () => {
               <Input
                 id="symbol"
                 value={formData.symbol}
-                onChange={(e) => setFormData(prev => ({ ...prev, symbol: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, symbol: e.target.value }))
+                }
                 className="col-span-3"
                 placeholder="Ex: PETR4, AAPL"
               />
@@ -674,7 +1093,17 @@ const Investments = () => {
               <Label htmlFor="type" className="text-right">
                 Tipo *
               </Label>
-              <Select value={formData.type} onValueChange={(value: 'acao' | 'fundo' | 'criptomoeda' | 'renda_fixa' | 'outros') => setFormData(prev => ({ ...prev, type: value }))}>
+              <Select
+                value={formData.type}
+                onValueChange={(
+                  value:
+                    | "acao"
+                    | "fundo"
+                    | "criptomoeda"
+                    | "renda_fixa"
+                    | "outros"
+                ) => setFormData((prev) => ({ ...prev, type: value }))}
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
@@ -696,7 +1125,9 @@ const Investments = () => {
                 type="number"
                 step="0.00000001"
                 value={formData.quantity}
-                onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, quantity: e.target.value }))
+                }
                 className="col-span-3"
                 placeholder="1.0"
               />
@@ -710,7 +1141,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={formData.initial_amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, initial_amount: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    initial_amount: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -724,7 +1160,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={formData.current_amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, current_amount: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    current_amount: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -737,7 +1178,12 @@ const Investments = () => {
                 id="purchase_date"
                 type="date"
                 value={formData.purchase_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, purchase_date: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    purchase_date: e.target.value,
+                  }))
+                }
                 className="col-span-3"
               />
             </div>
@@ -748,7 +1194,12 @@ const Investments = () => {
               <Input
                 id="brokerage"
                 value={formData.brokerage}
-                onChange={(e) => setFormData(prev => ({ ...prev, brokerage: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    brokerage: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="Ex: XP Investimentos, Clear"
               />
@@ -757,7 +1208,12 @@ const Investments = () => {
               <Label htmlFor="currency" className="text-right">
                 Moeda
               </Label>
-              <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
+              <Select
+                value={formData.currency}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, currency: value }))
+                }
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione a moeda" />
                 </SelectTrigger>
@@ -777,7 +1233,12 @@ const Investments = () => {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="Descrição opcional do investimento"
               />
@@ -787,7 +1248,14 @@ const Investments = () => {
             <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreate} disabled={!formData.name.trim() || !formData.quantity.trim() || !formData.initial_amount.trim()}>
+            <Button
+              onClick={handleCreate}
+              disabled={
+                !formData.name.trim() ||
+                !formData.quantity.trim() ||
+                !formData.initial_amount.trim()
+              }
+            >
               Criar Investimento
             </Button>
           </DialogFooter>
@@ -811,7 +1279,9 @@ const Investments = () => {
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="col-span-3"
                 placeholder="Ex: Tesouro Direto IPCA+"
               />
@@ -823,7 +1293,9 @@ const Investments = () => {
               <Input
                 id="edit-symbol"
                 value={formData.symbol}
-                onChange={(e) => setFormData(prev => ({ ...prev, symbol: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, symbol: e.target.value }))
+                }
                 className="col-span-3"
                 placeholder="Ex: PETR4, AAPL"
               />
@@ -832,7 +1304,17 @@ const Investments = () => {
               <Label htmlFor="edit-type" className="text-right">
                 Tipo *
               </Label>
-              <Select value={formData.type} onValueChange={(value: 'acao' | 'fundo' | 'criptomoeda' | 'renda_fixa' | 'outros') => setFormData(prev => ({ ...prev, type: value }))}>
+              <Select
+                value={formData.type}
+                onValueChange={(
+                  value:
+                    | "acao"
+                    | "fundo"
+                    | "criptomoeda"
+                    | "renda_fixa"
+                    | "outros"
+                ) => setFormData((prev) => ({ ...prev, type: value }))}
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
@@ -854,7 +1336,9 @@ const Investments = () => {
                 type="number"
                 step="0.00000001"
                 value={formData.quantity}
-                onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, quantity: e.target.value }))
+                }
                 className="col-span-3"
                 placeholder="1.0"
               />
@@ -868,7 +1352,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={formData.initial_amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, initial_amount: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    initial_amount: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -882,7 +1371,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={formData.current_amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, current_amount: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    current_amount: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -895,7 +1389,12 @@ const Investments = () => {
                 id="edit-purchase_date"
                 type="date"
                 value={formData.purchase_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, purchase_date: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    purchase_date: e.target.value,
+                  }))
+                }
                 className="col-span-3"
               />
             </div>
@@ -906,7 +1405,12 @@ const Investments = () => {
               <Input
                 id="edit-brokerage"
                 value={formData.brokerage}
-                onChange={(e) => setFormData(prev => ({ ...prev, brokerage: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    brokerage: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="Ex: XP Investimentos, Clear"
               />
@@ -915,7 +1419,12 @@ const Investments = () => {
               <Label htmlFor="edit-currency" className="text-right">
                 Moeda
               </Label>
-              <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
+              <Select
+                value={formData.currency}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, currency: value }))
+                }
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione a moeda" />
                 </SelectTrigger>
@@ -935,7 +1444,12 @@ const Investments = () => {
               <Textarea
                 id="edit-description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="Descrição opcional do investimento"
               />
@@ -945,7 +1459,14 @@ const Investments = () => {
             <Button variant="outline" onClick={() => setEditModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleEdit} disabled={!formData.name.trim() || !formData.quantity.trim() || !formData.initial_amount.trim()}>
+            <Button
+              onClick={handleEdit}
+              disabled={
+                !formData.name.trim() ||
+                !formData.quantity.trim() ||
+                !formData.initial_amount.trim()
+              }
+            >
               Salvar Alterações
             </Button>
           </DialogFooter>
@@ -953,10 +1474,15 @@ const Investments = () => {
       </Dialog>
 
       {/* Modal de Nova Transação */}
-      <Dialog open={transactionModalOpen} onOpenChange={setTransactionModalOpen}>
+      <Dialog
+        open={transactionModalOpen}
+        onOpenChange={setTransactionModalOpen}
+      >
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-hide">
           <DialogHeader>
-            <DialogTitle>Nova Transação - {selectedInvestment?.name}</DialogTitle>
+            <DialogTitle>
+              Nova Transação - {selectedInvestment?.name}
+            </DialogTitle>
             <DialogDescription>
               Registre uma nova transação para este investimento
             </DialogDescription>
@@ -966,7 +1492,36 @@ const Investments = () => {
               <Label htmlFor="transaction_type" className="text-right">
                 Tipo *
               </Label>
-              <Select value={transactionFormData.transaction_type} onValueChange={(value: 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'WITHDRAWAL' | 'FEE' | 'SPLIT' | 'BONUS' | 'OTHER') => setTransactionFormData(prev => ({ ...prev, transaction_type: value }))}>
+              <Select
+                value={transactionFormData.transaction_type}
+                onValueChange={(
+                  value:
+                    | "BUY"
+                    | "SELL"
+                    | "DIVIDEND"
+                    | "DEPOSIT"
+                    | "WITHDRAWAL"
+                    | "FEE"
+                    | "SPLIT"
+                    | "BONUS"
+                    | "OTHER"
+                ) => {
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    transaction_type: value,
+                    // Reset campos quando mudar o tipo
+                    quantity:
+                      value === "BUY" || value === "SELL" ? prev.quantity : "",
+                    price_per_unit:
+                      value === "BUY" || value === "SELL"
+                        ? prev.price_per_unit
+                        : "",
+                    total_amount: "",
+                    // Manter conta bancária selecionada
+                    bank_account_id: prev.bank_account_id,
+                  }));
+                }}
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
@@ -991,11 +1546,42 @@ const Investments = () => {
                 id="transaction_date"
                 type="date"
                 value={transactionFormData.transaction_date}
-                onChange={(e) => setTransactionFormData(prev => ({ ...prev, transaction_date: e.target.value }))}
+                onChange={(e) =>
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    transaction_date: e.target.value,
+                  }))
+                }
                 className="col-span-3"
               />
             </div>
-            {(transactionFormData.transaction_type === 'BUY' || transactionFormData.transaction_type === 'SELL') && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="bank_account_id" className="text-right">
+                Conta Bancária *
+              </Label>
+              <Select
+                value={transactionFormData.bank_account_id}
+                onValueChange={(value) =>
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    bank_account_id: value,
+                  }))
+                }
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione a conta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {(transactionFormData.transaction_type === "BUY" ||
+              transactionFormData.transaction_type === "SELL") && (
               <>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="quantity" className="text-right">
@@ -1006,7 +1592,24 @@ const Investments = () => {
                     type="number"
                     step="0.00000001"
                     value={transactionFormData.quantity}
-                    onChange={(e) => setTransactionFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                    onChange={(e) => {
+                      const newQuantity = e.target.value;
+                      setTransactionFormData((prev) => {
+                        const pricePerUnit =
+                          parseFloat(prev.price_per_unit) || 0;
+                        const quantity = parseFloat(newQuantity) || 0;
+                        const totalAmount =
+                          quantity > 0 && pricePerUnit > 0
+                            ? (quantity * pricePerUnit).toFixed(2)
+                            : prev.total_amount;
+
+                        return {
+                          ...prev,
+                          quantity: newQuantity,
+                          total_amount: totalAmount,
+                        };
+                      });
+                    }}
                     className="col-span-3"
                     placeholder="0.0"
                   />
@@ -1020,7 +1623,23 @@ const Investments = () => {
                     type="number"
                     step="0.01"
                     value={transactionFormData.price_per_unit}
-                    onChange={(e) => setTransactionFormData(prev => ({ ...prev, price_per_unit: e.target.value }))}
+                    onChange={(e) => {
+                      const newPricePerUnit = e.target.value;
+                      setTransactionFormData((prev) => {
+                        const quantity = parseFloat(prev.quantity) || 0;
+                        const pricePerUnit = parseFloat(newPricePerUnit) || 0;
+                        const totalAmount =
+                          quantity > 0 && pricePerUnit > 0
+                            ? (quantity * pricePerUnit).toFixed(2)
+                            : prev.total_amount;
+
+                        return {
+                          ...prev,
+                          price_per_unit: newPricePerUnit,
+                          total_amount: totalAmount,
+                        };
+                      });
+                    }}
                     className="col-span-3"
                     placeholder="0.00"
                   />
@@ -1036,7 +1655,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={transactionFormData.total_amount}
-                onChange={(e) => setTransactionFormData(prev => ({ ...prev, total_amount: e.target.value }))}
+                onChange={(e) =>
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    total_amount: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -1050,7 +1674,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={transactionFormData.fees}
-                onChange={(e) => setTransactionFormData(prev => ({ ...prev, fees: e.target.value }))}
+                onChange={(e) =>
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    fees: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -1064,7 +1693,12 @@ const Investments = () => {
                 type="number"
                 step="0.01"
                 value={transactionFormData.taxes}
-                onChange={(e) => setTransactionFormData(prev => ({ ...prev, taxes: e.target.value }))}
+                onChange={(e) =>
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    taxes: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="0.00"
               />
@@ -1076,17 +1710,35 @@ const Investments = () => {
               <Textarea
                 id="transaction_description"
                 value={transactionFormData.description}
-                onChange={(e) => setTransactionFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setTransactionFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="Descrição opcional da transação"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTransactionModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setTransactionModalOpen(false)}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleCreateTransaction} disabled={!transactionFormData.total_amount.trim()}>
+            <Button
+              onClick={handleCreateTransaction}
+              disabled={
+                !transactionFormData.total_amount.trim() ||
+                !transactionFormData.bank_account_id ||
+                ((transactionFormData.transaction_type === "BUY" ||
+                  transactionFormData.transaction_type === "SELL") &&
+                  (!transactionFormData.quantity.trim() ||
+                    !transactionFormData.price_per_unit.trim()))
+              }
+            >
               Criar Transação
             </Button>
           </DialogFooter>
@@ -1094,7 +1746,10 @@ const Investments = () => {
       </Dialog>
 
       {/* Modal de Visualizar Transações */}
-      <Dialog open={transactionsViewOpen} onOpenChange={setTransactionsViewOpen}>
+      <Dialog
+        open={transactionsViewOpen}
+        onOpenChange={setTransactionsViewOpen}
+      >
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto scrollbar-hide">
           <DialogHeader>
             <DialogTitle>Transações - {selectedInvestment?.name}</DialogTitle>
@@ -1103,48 +1758,82 @@ const Investments = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedInvestment && getInvestmentTransactions(selectedInvestment.id).length === 0 ? (
+            {selectedInvestment &&
+            getInvestmentTransactions(selectedInvestment.id).length === 0 ? (
               <div className="text-center py-8">
                 <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Nenhuma transação registrada ainda</p>
+                <p className="text-muted-foreground">
+                  Nenhuma transação registrada ainda
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {selectedInvestment && getInvestmentTransactions(selectedInvestment.id).map((transaction) => (
-                  <Card key={transaction.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={transaction.transaction_type === 'BUY' ? 'default' : transaction.transaction_type === 'SELL' ? 'destructive' : 'secondary'}>
-                            {transactionTypeLabels[transaction.transaction_type]}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDate(transaction.transaction_date)}
-                          </span>
+                {selectedInvestment &&
+                  getInvestmentTransactions(selectedInvestment.id).map(
+                    (transaction) => (
+                      <Card key={transaction.id} className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  transaction.transaction_type === "BUY"
+                                    ? "default"
+                                    : transaction.transaction_type === "SELL"
+                                    ? "destructive"
+                                    : "secondary"
+                                }
+                              >
+                                {
+                                  transactionTypeLabels[
+                                    transaction.transaction_type
+                                  ]
+                                }
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {formatDate(transaction.transaction_date)}
+                              </span>
+                            </div>
+                            {transaction.quantity &&
+                              transaction.price_per_unit && (
+                                <p className="text-sm">
+                                  {formatQuantity(transaction.quantity)} ×{" "}
+                                  {formatCurrency(transaction.price_per_unit)}
+                                </p>
+                              )}
+                            {transaction.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p
+                              className={`font-semibold ${
+                                transaction.transaction_type === "SELL" ||
+                                transaction.transaction_type === "DIVIDEND"
+                                  ? "text-success"
+                                  : ""
+                              }`}
+                            >
+                              {transaction.transaction_type === "SELL" ||
+                              transaction.transaction_type === "DIVIDEND"
+                                ? "+"
+                                : ""}
+                              {formatCurrency(transaction.total_amount)}
+                            </p>
+                            {(transaction.fees > 0 ||
+                              transaction.taxes > 0) && (
+                              <p className="text-xs text-muted-foreground">
+                                Taxas: {formatCurrency(transaction.fees)} |
+                                Impostos: {formatCurrency(transaction.taxes)}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        {transaction.quantity && transaction.price_per_unit && (
-                          <p className="text-sm">
-                            {formatQuantity(transaction.quantity)} × {formatCurrency(transaction.price_per_unit)}
-                          </p>
-                        )}
-                        {transaction.description && (
-                          <p className="text-sm text-muted-foreground">{transaction.description}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-semibold ${transaction.transaction_type === 'SELL' || transaction.transaction_type === 'DIVIDEND' ? 'text-success' : ''}`}>
-                          {transaction.transaction_type === 'SELL' || transaction.transaction_type === 'DIVIDEND' ? '+' : ''}
-                          {formatCurrency(transaction.total_amount)}
-                        </p>
-                        {(transaction.fees > 0 || transaction.taxes > 0) && (
-                          <p className="text-xs text-muted-foreground">
-                            Taxas: {formatCurrency(transaction.fees)} | Impostos: {formatCurrency(transaction.taxes)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                      </Card>
+                    )
+                  )}
               </div>
             )}
           </div>

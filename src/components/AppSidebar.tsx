@@ -22,6 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +72,25 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
+      <SidebarHeader className="border-b border-border/50 p-4">
+        <div className="flex items-center justify-center">
+          {isCollapsed ? (
+            <img 
+              src="/logo.png" 
+              alt="PulseFinance Logo" 
+              className="h-8 w-8 object-contain"
+            />
+          ) : (
+            <img 
+              src="/logo_PulseFinance.png" 
+              alt="PulseFinance" 
+              className="h-15 object-contain dark:filter-none"
+              style={{ filter: 'brightness(0) saturate(100%) invert(25%) sepia(84%) saturate(1907%) hue-rotate(197deg) brightness(97%) contrast(86%)' }}
+            />
+          )}
+        </div>
+      </SidebarHeader>
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-semibold text-muted-foreground">
