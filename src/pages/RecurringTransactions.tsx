@@ -319,7 +319,6 @@ const RecurringTransactions = () => {
       const message = shouldCreateFirstTransaction 
         ? `Transação recorrente criada e primeira ocorrência executada - Status: ${isActive ? 'Ativa' : 'Inativa'}`
         : `Transação recorrente criada - Status: ${isActive ? 'Ativa' : 'Inativa'}`;
-      console.log(message);
       
     } catch (error) {
       console.error('Erro ao criar transação recorrente:', error);
@@ -406,7 +405,6 @@ const RecurringTransactions = () => {
       
       // Show success message with status
       const isActive = !effectiveEndDate || effectiveEndDate > today;
-      console.log(`Transação recorrente editada com sucesso - Status: ${isActive ? 'Ativa' : 'Inativa'}`);
       
     } catch (error) {
       console.error('Erro ao editar transação recorrente:', error);
@@ -516,7 +514,6 @@ const RecurringTransactions = () => {
       // Reload the recurring transactions to show updated next occurrence
       await loadRecurringTransactions();
       
-      console.log('Transação executada e próxima ocorrência atualizada com sucesso');
     } catch (error) {
       console.error('Erro ao executar transação:', error);
     }
@@ -536,7 +533,6 @@ const RecurringTransactions = () => {
       if (error) throw error;
 
       await loadRecurringTransactions();
-      console.log('Transação reativada com sucesso');
     } catch (error) {
       console.error('Erro ao reativar transação:', error);
     }

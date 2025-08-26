@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { APP_VERSION } from "@/config/version";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -75,22 +76,25 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-border/50 p-4">
         <div className="flex items-center justify-center">
           {isCollapsed ? (
-            <img 
-              src="/logo.png" 
-              alt="PulseFinance Logo" 
+            <img
+              src="/logo.png"
+              alt="PulseFinance Logo"
               className="h-8 w-8 object-contain"
             />
           ) : (
-            <img 
-              src="/logo_PulseFinance.png" 
-              alt="PulseFinance" 
+            <img
+              src="/logo_PulseFinance.png"
+              alt="PulseFinance"
               className="h-15 object-contain dark:filter-none"
-              style={{ filter: 'brightness(0) saturate(100%) invert(25%) sepia(84%) saturate(1907%) hue-rotate(197deg) brightness(97%) contrast(86%)' }}
+              style={{
+                filter:
+                  "brightness(0) saturate(100%) invert(25%) sepia(84%) saturate(1907%) hue-rotate(197deg) brightness(97%) contrast(86%)",
+              }}
             />
           )}
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-semibold text-muted-foreground">
@@ -150,6 +154,11 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        {!isCollapsed && (
+          <div className="px-4 py-2 text-center">
+            <p className="text-xs text-muted-foreground">v{APP_VERSION}</p>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

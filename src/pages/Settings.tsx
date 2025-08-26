@@ -1,17 +1,33 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { User, Shield, Bell, Database, LogOut, Trash2, Save } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { User, Shield, Database, LogOut, Trash2, Save } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Profile {
   id: string;
@@ -27,17 +43,9 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [name, setName] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
-  // Configurações de notificação (mock)
-  const [notifications, setNotifications] = useState({
-    emailTransactions: true,
-    emailGoals: true,
-    pushNotifications: false,
-    weeklyReports: true
-  });
+  const [name, setName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -50,12 +58,12 @@ const Settings = () => {
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== "PGRST116") {
         throw error;
       }
 
@@ -65,11 +73,16 @@ const Settings = () => {
       } else {
         // Criar perfil se não existir
         const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([{
-            user_id: user.id,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário'
-          }])
+          .from("profiles")
+          .insert([
+            {
+              user_id: user.id,
+              name:
+                user.user_metadata?.name ||
+                user.email?.split("@")[0] ||
+                "Usuário",
+            },
+          ])
           .select()
           .single();
 
@@ -78,11 +91,11 @@ const Settings = () => {
         setName(newProfile.name);
       }
     } catch (error) {
-      console.error('Erro ao carregar perfil:', error);
+      console.error("Erro ao carregar perfil:", error);
       toast({
-        title: 'Erro',
-        description: 'Erro ao carregar dados do perfil.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Erro ao carregar dados do perfil.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -92,9 +105,9 @@ const Settings = () => {
   const saveProfile = async () => {
     if (!user || !name.trim()) {
       toast({
-        title: 'Erro',
-        description: 'Nome é obrigatório.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Nome é obrigatório.",
+        variant: "destructive",
       });
       return;
     }
@@ -103,24 +116,24 @@ const Settings = () => {
       setSaving(true);
 
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ name: name.trim() })
-        .eq('user_id', user.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
       toast({
-        title: 'Sucesso',
-        description: 'Perfil atualizado com sucesso.',
+        title: "Sucesso",
+        description: "Perfil atualizado com sucesso.",
       });
 
       loadProfile(); // Recarregar dados
     } catch (error) {
-      console.error('Erro ao salvar perfil:', error);
+      console.error("Erro ao salvar perfil:", error);
       toast({
-        title: 'Erro',
-        description: 'Erro ao atualizar perfil.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Erro ao atualizar perfil.",
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
@@ -130,18 +143,18 @@ const Settings = () => {
   const changePassword = async () => {
     if (!newPassword || newPassword.length < 6) {
       toast({
-        title: 'Erro',
-        description: 'A nova senha deve ter pelo menos 6 caracteres.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
       });
       return;
     }
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: 'Erro',
-        description: 'As senhas não coincidem.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
       });
       return;
     }
@@ -150,24 +163,24 @@ const Settings = () => {
       setSaving(true);
 
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Sucesso',
-        description: 'Senha alterada com sucesso.',
+        title: "Sucesso",
+        description: "Senha alterada com sucesso.",
       });
 
-      setNewPassword('');
-      setConfirmPassword('');
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
-      console.error('Erro ao alterar senha:', error);
+      console.error("Erro ao alterar senha:", error);
       toast({
-        title: 'Erro',
-        description: 'Erro ao alterar senha.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Erro ao alterar senha.",
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
@@ -178,17 +191,17 @@ const Settings = () => {
     try {
       const { error } = await signOut();
       if (error) throw error;
-      
+
       toast({
-        title: 'Sucesso',
-        description: 'Logout realizado com sucesso.',
+        title: "Sucesso",
+        description: "Logout realizado com sucesso.",
       });
     } catch (error) {
-      console.error('Erro no logout:', error);
+      console.error("Erro no logout:", error);
       toast({
-        title: 'Erro',
-        description: 'Erro ao realizar logout.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Erro ao realizar logout.",
+        variant: "destructive",
       });
     }
   };
@@ -196,14 +209,14 @@ const Settings = () => {
   const deleteAccount = async () => {
     // Esta funcionalidade requer implementação adicional no backend
     toast({
-      title: 'Funcionalidade não disponível',
-      description: 'Entre em contato com o suporte para exclusão de conta.',
-      variant: 'destructive',
+      title: "Funcionalidade não disponível",
+      description: "Entre em contato com o suporte para exclusão de conta.",
+      variant: "destructive",
     });
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR');
+    return new Date(dateString).toLocaleString("pt-BR");
   };
 
   if (loading) {
@@ -244,7 +257,12 @@ const Settings = () => {
 
       <div className="grid gap-6">
         {/* Informações da Conta */}
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -269,7 +287,7 @@ const Settings = () => {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  value={user?.email || ''}
+                  value={user?.email || ""}
                   disabled
                   placeholder="Seu email"
                 />
@@ -278,31 +296,34 @@ const Settings = () => {
                 </p>
               </div>
             </div>
-            
+
             {profile && (
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <span>
-                  Criado em: {formatDate(profile.created_at)}
-                </span>
+                <span>Criado em: {formatDate(profile.created_at)}</span>
                 <span>
                   Última atualização: {formatDate(profile.updated_at)}
                 </span>
               </div>
             )}
 
-            <Button 
-              onClick={saveProfile} 
+            <Button
+              onClick={saveProfile}
               disabled={saving}
-              style={{ background: 'var(--income-gradient)' }}
+              style={{ background: "var(--income-gradient)" }}
             >
               <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Salvando...' : 'Salvar Alterações'}
+              {saving ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </CardContent>
         </Card>
 
         {/* Segurança */}
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
@@ -336,101 +357,24 @@ const Settings = () => {
               </div>
             </div>
 
-            <Button 
-              onClick={changePassword} 
+            <Button
+              onClick={changePassword}
               disabled={saving || !newPassword || !confirmPassword}
               variant="outline"
             >
               <Shield className="h-4 w-4 mr-2" />
-              {saving ? 'Alterando...' : 'Alterar Senha'}
+              {saving ? "Alterando..." : "Alterar Senha"}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Notificações */}
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notificações
-            </CardTitle>
-            <CardDescription>
-              Configure suas preferências de notificações
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email para transações</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receber notificação por email ao criar transações
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.emailTransactions}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, emailTransactions: checked }))
-                  }
-                />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email para metas</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receber lembretes sobre metas financeiras
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.emailGoals}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, emailGoals: checked }))
-                  }
-                />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Notificações push</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receber notificações no navegador
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.pushNotifications}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, pushNotifications: checked }))
-                  }
-                />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Relatórios semanais</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receber resumo semanal por email
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.weeklyReports}
-                  onCheckedChange={(checked) => 
-                    setNotifications(prev => ({ ...prev, weeklyReports: checked }))
-                  }
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Dados e Privacidade */}
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database className="h-5 w-5" />
@@ -445,7 +389,8 @@ const Settings = () => {
               <div>
                 <h4 className="font-medium mb-2">Dados da conta</h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Você pode exportar todos os seus dados ou excluir permanentemente sua conta.
+                  Você pode exportar todos os seus dados ou excluir
+                  permanentemente sua conta.
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline">
@@ -454,24 +399,26 @@ const Settings = () => {
                   </Button>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div>
-                <h4 className="font-medium mb-2 text-destructive">Zona de Perigo</h4>
+                <h4 className="font-medium mb-2 text-destructive">
+                  Zona de Perigo
+                </h4>
                 <p className="text-sm text-muted-foreground mb-4">
                   Ações irreversíveis que afetam permanentemente sua conta.
                 </p>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleSignOut}
                     className="border-muted-foreground"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     Sair da Conta
                   </Button>
-                  
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive">
@@ -481,10 +428,13 @@ const Settings = () => {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir conta permanentemente?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                          Excluir conta permanentemente?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta
-                          e removerá todos os seus dados de nossos servidores.
+                          Esta ação não pode ser desfeita. Isso excluirá
+                          permanentemente sua conta e removerá todos os seus
+                          dados de nossos servidores.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

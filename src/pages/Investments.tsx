@@ -128,7 +128,9 @@ const Investments = () => {
   );
   const [selectedInvestment, setSelectedInvestment] =
     useState<Investment | null>(null);
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [formData, setFormData] = useState({
     name: "",
     symbol: "",
@@ -415,16 +417,79 @@ const Investments = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      console.log(`🗑️ Iniciando exclusão do investimento ${investmentId}`);
+
+      // Primeiro, verificar quantas transações existem para este investimento
+      const { data: transactionsToDelete, error: checkError } = await supabase
+        .from("investment_transactions")
+        .select("id, transaction_type, total_amount")
+        .eq("investment_id", investmentId);
+
+      if (checkError) throw checkError;
+
+      console.log(
+        `📊 Encontradas ${
+          transactionsToDelete?.length || 0
+        } transações para deletar`
+      );
+
+      // Deletar todas as transações relacionadas ao investimento
+      if (transactionsToDelete && transactionsToDelete.length > 0) {
+        const { error: transactionError } = await supabase
+          .from("investment_transactions")
+          .delete()
+          .eq("investment_id", investmentId);
+
+        if (transactionError) throw transactionError;
+        console.log(
+          `✅ ${transactionsToDelete.length} transações de investimento deletadas`
+        );
+      }
+
+      // Deletar possíveis transações financeiras relacionadas (se existirem)
+      const investmentName = investments.find(
+        (inv) => inv.id === investmentId
+      )?.name;
+      if (investmentName) {
+        const { error: financialTransactionError } = await supabase
+          .from("transactions")
+          .delete()
+          .eq("user_id", user.id)
+          .ilike("description", `%${investmentName}%`);
+
+        // Não falhar se der erro aqui, pois pode não existir transações financeiras
+        if (financialTransactionError) {
+          console.log(
+            `⚠️ Aviso ao deletar transações financeiras:`,
+            financialTransactionError
+          );
+        } else {
+          console.log(`💰 Transações financeiras relacionadas removidas`);
+        }
+      }
+
+      // Por último, deletar o investimento
+      const { error: investmentError } = await supabase
         .from("investments")
         .delete()
-        .eq("id", investmentId);
+        .eq("id", investmentId)
+        .eq("user_id", user.id); // Adicionar verificação de usuário por segurança
 
-      if (error) throw error;
+      if (investmentError) throw investmentError;
+      console.log(`🎯 Investimento deletado com sucesso`);
 
+      // Atualizar o estado local
       setInvestments((prev) => prev.filter((inv) => inv.id !== investmentId));
+      setTransactions((prev) =>
+        prev.filter((trans) => trans.investment_id !== investmentId)
+      );
+
+      console.log(`✨ Estados locais atualizados`);
     } catch (error) {
-      console.error("Erro ao deletar investimento:", error);
+      console.error("❌ Erro ao deletar investimento:", error);
+      alert(
+        `Erro ao deletar investimento: ${error.message || "Erro desconhecido"}`
+      );
     }
   };
 
@@ -548,7 +613,14 @@ const Investments = () => {
   };
 
   const createFinancialTransaction = async (
-    investmentTransaction: any,
+    investmentTransaction: {
+      transaction_type: string;
+      total_amount: number;
+      fees: number;
+      taxes: number;
+      transaction_date: string;
+      description?: string;
+    },
     investment: Investment
   ) => {
     if (!transactionFormData.bank_account_id) return;
@@ -634,7 +706,12 @@ const Investments = () => {
 
   const updateInvestmentFromTransaction = async (
     investment: Investment,
-    transaction: any
+    transaction: {
+      transaction_type: string;
+      quantity?: number;
+      price_per_unit?: number;
+      total_amount: number;
+    }
   ) => {
     try {
       let newQuantity = investment.quantity;
@@ -715,6 +792,776 @@ const Investments = () => {
 
   const getInvestmentTransactions = (investmentId: string) => {
     return transactions.filter((t) => t.investment_id === investmentId);
+  };
+
+  const handleSpreadsheetImport = async (
+    importedData: Record<string, unknown>[]
+  ) => {
+    if (!user) return;
+
+    try {
+      let importedCount = 0;
+      let skippedCount = 0;
+
+      // Função para normalizar nomes de ativos (considerando mudanças de nomenclatura da B3)
+      const normalizeAssetName = (name: string): string => {
+        if (!name || name === "-") return "";
+
+        const originalName = String(name).trim();
+        let normalized = originalName
+          .toLowerCase()
+          .trim()
+          // Remover caracteres especiais, mantendo apenas letras, números, espaços e hífens
+          .replace(/[^\w\s-]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        console.log(`🔄 Normalizando: "${originalName}" -> "${normalized}"`);
+
+        // 1. Primeiro, tentar extrair códigos de ações (PETR4, VALE3, etc.)
+        const stockCodeMatch = normalized.match(/\b([a-z]{3,4}\d{1,2})\b/);
+        if (stockCodeMatch) {
+          const stockCode = stockCodeMatch[1];
+          console.log(`  📊 Código de ação identificado: ${stockCode}`);
+          return stockCode;
+        }
+
+        // 2. Para FIIs (Fundos Imobiliários) - padrão XXXX11
+        const fiiMatch = normalized.match(/\b([a-z]{4}11)\b/);
+        if (fiiMatch) {
+          const fiiCode = fiiMatch[1];
+          console.log(`  🏢 FII identificado: ${fiiCode}`);
+          return fiiCode;
+        }
+
+        // 3. Para BDRs (Brazilian Depositary Receipts) - padrão XXXX34, XXXX35
+        const bdrMatch = normalized.match(/\b([a-z]{4}3[4-5])\b/);
+        if (bdrMatch) {
+          const bdrCode = bdrMatch[1];
+          console.log(`  🌍 BDR identificado: ${bdrCode}`);
+          return bdrCode;
+        }
+
+        // 4. Para fundos de investimento, tentar extrair um identificador único
+        if (
+          normalized.includes("fundo") ||
+          normalized.includes("fii") ||
+          normalized.includes("fund")
+        ) {
+          console.log(`  💰 Fundo de investimento detectado`);
+
+          // Tentar encontrar siglas ou códigos únicos no nome do fundo
+          const fundCodeMatch = normalized.match(
+            /\b([a-z]{2,6})\s*(?:fundo|fii|fund|fi|inv)/
+          );
+          if (fundCodeMatch) {
+            const fundCode = fundCodeMatch[1];
+            console.log(`    Código do fundo extraído: ${fundCode}`);
+            return `fund_${fundCode}`;
+          }
+
+          // Se não encontrar código, usar palavras-chave significativas
+          let fundName = normalized
+            .replace(
+              /\b(fundo|fii|fund|investimento|inv|de|da|do|dos|das|e|&|ltda|sa)\b/g,
+              ""
+            )
+            .replace(/\s+/g, " ")
+            .trim();
+
+          // Pegar as primeiras 2-3 palavras mais significativas
+          const significantWords = fundName
+            .split(" ")
+            .filter((word) => word.length > 2)
+            .slice(0, 3);
+          if (significantWords.length > 0) {
+            const fundKey = `fund_${significantWords.join("_")}`;
+            console.log(`    Chave do fundo gerada: ${fundKey}`);
+            return fundKey;
+          }
+        }
+
+        // 5. Para títulos do Tesouro Direto
+        if (
+          normalized.includes("tesouro") ||
+          normalized.includes("ltn") ||
+          normalized.includes("ntn")
+        ) {
+          console.log(`  🏛️ Título do Tesouro detectado`);
+
+          // Extrair tipo específico do título
+          if (normalized.includes("ipca")) return "tesouro_ipca";
+          if (normalized.includes("selic")) return "tesouro_selic";
+          if (normalized.includes("prefixado")) return "tesouro_prefixado";
+          if (normalized.includes("ltn")) return "tesouro_ltn";
+          if (normalized.includes("ntn")) return "tesouro_ntn";
+
+          return "tesouro_outros";
+        }
+
+        // 6. Para CDBs, LCIs, LCAs e outros produtos de renda fixa
+        if (normalized.match(/\b(cdb|lci|lca|debenture|cri|cra)\b/)) {
+          console.log(`  🏦 Produto de renda fixa detectado`);
+
+          const productType =
+            normalized.match(/\b(cdb|lci|lca|debenture|cri|cra)\b/)?.[1] ||
+            "renda_fixa";
+
+          // Tentar extrair nome do banco/emissor
+          const bankMatch = normalized.match(
+            /\b(banco|btg|itau|bradesco|santander|caixa|bb|nubank|inter)\b/
+          );
+          if (bankMatch) {
+            const bankName = bankMatch[1];
+            console.log(`    Banco/emissor identificado: ${bankName}`);
+            return `${productType}_${bankName}`;
+          }
+
+          return `${productType}_generico`;
+        }
+
+        // 7. Para ações estrangeiras ou outros ativos especiais
+        if (normalized.match(/\b(unit|receipt|bdr)\b/)) {
+          console.log(`  🌐 Ativo especial detectado`);
+        }
+
+        // 8. Fallback: usar nome simplificado removendo palavras comuns
+        normalized = normalized
+          .replace(
+            /\b(sa|ltda|participacoes|holding|cia|companhia|empresa|group|corp|inc|ltd)\b/g,
+            ""
+          )
+          .replace(/\b(de|da|do|dos|das|e|&|em|para|com|por)\b/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        // Pegar as primeiras palavras mais significativas (pelo menos 3 caracteres)
+        const words = normalized.split(" ").filter((word) => word.length >= 3);
+        const finalKey =
+          words.length > 0
+            ? words.slice(0, 2).join("_")
+            : originalName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+
+        console.log(`  ⚙️ Fallback aplicado: ${finalKey}`);
+        return finalKey;
+      };
+
+      console.log(`\n🔍 === ANÁLISE DE NOMES DOS ATIVOS ===`);
+      console.log(`Total de registros na planilha: ${importedData.length}`);
+
+      // Mostrar todos os nomes originais e normalizados
+      const uniqueAssetNames = [
+        ...new Set(importedData.map((row) => row.asset_name)),
+      ].filter((name) => name && name !== "-");
+      console.log(`Ativos únicos encontrados: ${uniqueAssetNames.length}`);
+      console.log(`\n📝 MAPEAMENTO DE NOMES:`);
+      uniqueAssetNames.forEach((name) => {
+        const normalized = normalizeAssetName(String(name));
+        console.log(`  "${name}" -> "${normalized}"`);
+      });
+
+      // Agrupar dados por nome do ativo normalizado para analisar posição final
+      const assetGroups = importedData.reduce((groups, rowData) => {
+        if (!rowData.asset_name || rowData.asset_name === "-") return groups;
+
+        const assetName = normalizeAssetName(String(rowData.asset_name));
+        if (!assetName) return groups;
+
+        if (!groups[assetName]) {
+          groups[assetName] = [];
+        }
+        groups[assetName].push({
+          ...rowData,
+          original_asset_name: rowData.asset_name, // Manter nome original
+        });
+        return groups;
+      }, {} as Record<string, Record<string, unknown>[]>);
+
+      // Analisar cada ativo para determinar se deve ser criado
+      const assetsToProcess = Object.entries(assetGroups).filter(
+        ([assetName, transactions]) => {
+          let totalQuantity = 0;
+          let totalValue = 0;
+          let hasValidTransactions = false;
+          let transactionDetails: Array<{
+            type: string;
+            quantity: number;
+            value: number;
+            date: string;
+          }> = [];
+
+          console.log(`\n📋 === ANALISANDO ATIVO: ${assetName} ===`);
+          console.log(`📊 Total de transações: ${transactions.length}`);
+
+          // Mostrar quais nomes originais foram agrupados neste ativo normalizado
+          const originalNames = [
+            ...new Set(transactions.map((t) => t.original_asset_name)),
+          ];
+          console.log(
+            `🏷️  Nomes originais agrupados: ${originalNames.join(", ")}`
+          );
+
+          for (const transaction of transactions) {
+            // Log detalhado de cada transação
+            console.log(
+              `  📝 Transação ${transactions.indexOf(transaction) + 1}:`,
+              {
+                original_name: transaction.original_asset_name,
+                type: transaction.transaction_type,
+                quantity: transaction.quantity,
+                price: transaction.price_per_unit,
+                total: transaction.total_amount,
+                date: transaction.transaction_date,
+              }
+            );
+
+            // Pular transações inválidas
+            if (
+              !transaction.total_amount ||
+              transaction.total_amount === "-" ||
+              transaction.total_amount === 0
+            ) {
+              console.log(`  -> Pulando: valor total inválido`);
+              continue;
+            }
+
+            // Pular registros onde tanto preço unitário quanto valor da operação são "-"
+            if (
+              (transaction.price_per_unit === "-" ||
+                !transaction.price_per_unit) &&
+              (transaction.total_amount === "-" || !transaction.total_amount)
+            ) {
+              console.log(`  -> Pulando: preço e valor inválidos`);
+              continue;
+            }
+
+            hasValidTransactions = true;
+
+            // Normalizar tipos de transação
+            let transactionType = String(
+              transaction.transaction_type || "OTHER"
+            )
+              .toUpperCase()
+              .trim();
+
+            // Mapear tipos em português para inglês (baseado nos tipos da B3)
+            const typeMapping: Record<string, string> = {
+              DIVIDENDO: "DIVIDEND",
+              COMPRA: "BUY",
+              VENDA: "SELL",
+              DEPÓSITO: "DEPOSIT",
+              RETIRADA: "WITHDRAWAL",
+              SAQUE: "WITHDRAWAL",
+              "RESGATE ANTECIPADO": "WITHDRAWAL",
+              TAXA: "FEE",
+              DESDOBRAMENTO: "SPLIT",
+              BONIFICAÇÃO: "BONUS",
+              RENDIMENTO: "DIVIDEND",
+              JUROS: "DIVIDEND",
+              // Tipos específicos da B3
+              "TRANSFERÊNCIA - LIQUIDAÇÃO": "BUY",
+              "TRANSFERENCIA - LIQUIDACAO": "BUY",
+              ATUALIZAÇÃO: "OTHER",
+              ATUALIZACAO: "OTHER",
+              INCORPORAÇÃO: "OTHER",
+              INCORPORACAO: "OTHER",
+              "CESSÃO DE DIREITOS": "SELL",
+              "CESSAO DE DIREITOS": "SELL",
+              "DIREITO DE SUBSCRIÇÃO": "OTHER",
+              "DIREITO DE SUBSCRICAO": "OTHER",
+              EXERCÍCIO: "OTHER",
+              EXERCICIO: "OTHER",
+              GRUPAMENTO: "SPLIT",
+              CISÃO: "SPLIT",
+              CISAO: "SPLIT",
+            };
+
+            transactionType = typeMapping[transactionType] || transactionType;
+
+            // Lógica inteligente: se não foi possível mapear, tentar inferir pela entrada/saída e dados
+            if (transactionType === "OTHER") {
+              const entryType = transaction.entry_type
+                ? String(transaction.entry_type).toLowerCase()
+                : "";
+              const hasValidQuantity =
+                transaction.quantity &&
+                transaction.quantity !== "-" &&
+                Number(transaction.quantity) > 0;
+              const hasValidPrice =
+                transaction.price_per_unit &&
+                transaction.price_per_unit !== "-" &&
+                Number(transaction.price_per_unit) > 0;
+
+              console.log(`  🤖 Tentando inferir tipo para transação OTHER:`, {
+                entry_type: entryType,
+                hasValidQuantity,
+                hasValidPrice,
+                total_amount: transaction.total_amount,
+              });
+
+              // Se é débito (saída de dinheiro) com quantidade e preço válidos = COMPRA
+              if (
+                (entryType === "debit" || entryType === "debito") &&
+                hasValidQuantity &&
+                hasValidPrice
+              ) {
+                transactionType = "BUY";
+                console.log(
+                  `    -> Inferido como COMPRA (débito + quantidade + preço)`
+                );
+              }
+              // Se é crédito (entrada de dinheiro) sem quantidade específica = DIVIDENDO
+              else if (
+                (entryType === "credit" || entryType === "credito") &&
+                !hasValidQuantity
+              ) {
+                transactionType = "DIVIDEND";
+                console.log(
+                  `    -> Inferido como DIVIDENDO (crédito sem quantidade)`
+                );
+              }
+              // Se é crédito com quantidade e preço válidos = VENDA
+              else if (
+                (entryType === "credit" || entryType === "credito") &&
+                hasValidQuantity &&
+                hasValidPrice
+              ) {
+                transactionType = "SELL";
+                console.log(
+                  `    -> Inferido como VENDA (crédito + quantidade + preço)`
+                );
+              } else {
+                console.log(
+                  `    -> Mantido como OTHER (não foi possível inferir)`
+                );
+              }
+            }
+
+            // Calcular quantidade e valor
+            const quantity =
+              transaction.quantity && transaction.quantity !== "-"
+                ? Number(transaction.quantity)
+                : 0;
+            const totalAmount = Number(transaction.total_amount) || 0;
+
+            transactionDetails.push({
+              type: transactionType,
+              quantity: quantity,
+              value: totalAmount,
+              date: String(transaction.transaction_date || ""),
+            });
+
+            console.log(
+              `  -> Processando: ${transactionType}, quantidade: ${quantity}, valor: ${totalAmount}`
+            );
+
+            switch (transactionType) {
+              case "BUY":
+              case "COMPRA":
+                totalQuantity += quantity;
+                totalValue += totalAmount;
+                console.log(
+                  `  -> COMPRA: +${quantity} unidades, +R$${totalAmount}`
+                );
+                break;
+              case "SELL":
+              case "VENDA":
+                totalQuantity -= quantity;
+                totalValue -= totalAmount; // Venda reduz o valor investido
+                console.log(
+                  `  -> VENDA: -${quantity} unidades, -R$${totalAmount}`
+                );
+                break;
+              case "WITHDRAWAL":
+              case "RETIRADA":
+              case "SAQUE":
+                // Para resgates/saques, analisar se é resgate total
+                if (quantity === 0 && totalAmount > 0) {
+                  // Resgate por valor sem especificar quantidade - pode ser resgate total
+                  console.log(
+                    `  -> RESGATE POR VALOR: R$${totalAmount} (pode ser resgate total)`
+                  );
+                  totalValue -= totalAmount;
+                } else if (quantity > 0) {
+                  // Resgate com quantidade específica
+                  totalQuantity -= quantity;
+                  totalValue -= totalAmount;
+                  console.log(
+                    `  -> RESGATE: -${quantity} unidades, -R$${totalAmount}`
+                  );
+                }
+                break;
+              case "DIVIDEND":
+              case "DIVIDENDO":
+              case "RENDIMENTO":
+              case "JUROS":
+                // Dividendos não afetam quantidade, mas adicionam valor
+                console.log(
+                  `  -> DIVIDENDO: +R$${totalAmount} (não afeta quantidade)`
+                );
+                break;
+              case "SPLIT":
+              case "DESDOBRAMENTO":
+                if (quantity > 1) {
+                  // Desdobramento multiplica a quantidade
+                  const multiplier = quantity;
+                  totalQuantity *= multiplier;
+                  console.log(
+                    `  -> DESDOBRAMENTO: quantidade multiplicada por ${multiplier}`
+                  );
+                }
+                break;
+              case "BONUS":
+              case "BONIFICAÇÃO":
+                // Bonificação adiciona quantidade sem custo
+                totalQuantity += quantity;
+                console.log(
+                  `  -> BONIFICAÇÃO: +${quantity} unidades gratuitas`
+                );
+                break;
+              default:
+                console.log(
+                  `  -> OUTRO TIPO (${transactionType}): não afeta quantidade`
+                );
+            }
+          }
+
+          console.log(`\n📊 RESUMO DETALHADO DO ATIVO ${assetName}:`);
+          console.log(`- Transações válidas: ${hasValidTransactions}`);
+          console.log(`- Quantidade final: ${totalQuantity}`);
+          console.log(`- Valor líquido: R$${totalValue}`);
+          console.log(`- Detalhes das transações:`, transactionDetails);
+
+          // Só processar ativos que tenham transações válidas
+          if (!hasValidTransactions) {
+            console.log(`❌ PULANDO ${assetName}: sem transações válidas`);
+            return false;
+          }
+
+          // Verificar se ainda tem posição no ativo
+          // Um ativo deve ser criado se:
+          // 1. Tem quantidade > 0 (ações, fundos, etc.), OU
+          // 2. Tem valor líquido > 0 (para casos de renda fixa sem quantidade específica), OU
+          // 3. Teve transações válidas recentemente (últimos 30 dias)
+          const recentTransactions = transactionDetails.filter((t) => {
+            const transactionDate = new Date(t.date);
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return transactionDate >= thirtyDaysAgo;
+          });
+
+          const shouldProcess =
+            totalQuantity > 0 ||
+            (totalQuantity === 0 && totalValue > 0) ||
+            (recentTransactions.length > 0 && hasValidTransactions);
+
+          console.log(`\n🔍 ANÁLISE DE CRITÉRIOS PARA ${assetName}:`);
+          console.log(
+            `- totalQuantity > 0: ${totalQuantity > 0} (${totalQuantity})`
+          );
+          console.log(
+            `- totalValue > 0 e quantidade = 0: ${
+              totalQuantity === 0 && totalValue > 0
+            } (valor: R$${totalValue})`
+          );
+          console.log(
+            `- transações recentes: ${
+              recentTransactions.length > 0 && hasValidTransactions
+            } (${recentTransactions.length} transações)`
+          );
+          console.log(`- shouldProcess: ${shouldProcess}`);
+
+          if (!shouldProcess) {
+            console.log(
+              `❌ PULANDO ${assetName}: posição zerada (quantidade: ${totalQuantity}, valor: R$${totalValue})`
+            );
+            return false;
+          }
+
+          console.log(
+            `✅ PROCESSANDO ${assetName}: posição válida (quantidade: ${totalQuantity}, valor: R$${totalValue})`
+          );
+          return true;
+        }
+      );
+
+      // Processar apenas ativos que devem ser criados
+      for (const [assetName, assetTransactions] of assetsToProcess) {
+        for (const rowData of assetTransactions) {
+          // Pular registros com campos essenciais como "-" ou vazios
+          if (
+            !rowData.asset_name ||
+            rowData.asset_name === "-" ||
+            !rowData.total_amount ||
+            rowData.total_amount === "-" ||
+            rowData.total_amount === 0
+          ) {
+            skippedCount++;
+            continue;
+          }
+
+          // Pular registros onde tanto preço unitário quanto valor da operação são "-"
+          // (ex: Direitos de Subscrição sem valor)
+          if (
+            (rowData.price_per_unit === "-" || !rowData.price_per_unit) &&
+            (rowData.total_amount === "-" || !rowData.total_amount)
+          ) {
+            skippedCount++;
+            continue;
+          }
+
+          // Verificar se o investimento já existe (tanto na lista local quanto no banco)
+          let investment = investments.find(
+            (inv) => inv.name.toLowerCase() === rowData.asset_name.toLowerCase()
+          );
+
+          // Se não existir na lista local, verificar no banco de dados
+          if (!investment) {
+            const { data: existingInvestment, error: checkInvestmentError } =
+              await supabase
+                .from("investments")
+                .select("*")
+                .eq("user_id", user.id)
+                .ilike("name", rowData.asset_name)
+                .maybeSingle();
+
+            if (
+              checkInvestmentError &&
+              checkInvestmentError.code !== "PGRST116"
+            ) {
+              throw checkInvestmentError;
+            }
+
+            if (existingInvestment) {
+              investment = existingInvestment;
+              // Adicionar à lista local para evitar futuras consultas
+              setInvestments((prev) => {
+                const exists = prev.find(
+                  (inv) => inv.id === existingInvestment.id
+                );
+                return exists ? prev : [existingInvestment, ...prev];
+              });
+            }
+          }
+
+          // Se ainda não existir, criar novo investimento
+          if (!investment) {
+            const { data: newInvestment, error: investmentError } =
+              await supabase
+                .from("investments")
+                .insert([
+                  {
+                    user_id: user.id,
+                    name: rowData.asset_name,
+                    symbol: null,
+                    type: "acao", // Padrão, pode ser ajustado
+                    quantity:
+                      rowData.quantity && rowData.quantity !== "-"
+                        ? rowData.quantity
+                        : 0,
+                    initial_amount: rowData.total_amount || 0,
+                    current_amount: rowData.total_amount || 0,
+                    purchase_date:
+                      rowData.transaction_date ||
+                      new Date().toISOString().split("T")[0],
+                    brokerage:
+                      rowData.brokerage && rowData.brokerage !== "-"
+                        ? rowData.brokerage
+                        : null,
+                    currency: "BRL",
+                    description: `Importado via planilha`,
+                    average_purchase_price:
+                      rowData.price_per_unit && rowData.price_per_unit !== "-"
+                        ? rowData.price_per_unit
+                        : 0,
+                  },
+                ])
+                .select()
+                .single();
+
+            if (investmentError) throw investmentError;
+            investment = newInvestment;
+            setInvestments((prev) => [newInvestment, ...prev]);
+          }
+
+          // Verificar se a transação já existe (evitar duplicação)
+          const { data: existingTransaction, error: checkError } =
+            await supabase
+              .from("investment_transactions")
+              .select("id")
+              .eq("investment_id", investment.id)
+              .eq("transaction_date", rowData.transaction_date)
+              .eq("transaction_type", rowData.transaction_type || "OTHER")
+              .eq("total_amount", rowData.total_amount)
+              .maybeSingle();
+
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
+
+          if (existingTransaction) {
+            skippedCount++;
+            continue; // Pular esta transação
+          }
+
+          // Criar transação de investimento
+          const { error: transactionError } = await supabase
+            .from("investment_transactions")
+            .insert([
+              {
+                investment_id: investment.id,
+                transaction_type: rowData.transaction_type || "OTHER",
+                transaction_date: rowData.transaction_date,
+                quantity:
+                  rowData.quantity && rowData.quantity !== "-"
+                    ? rowData.quantity
+                    : null,
+                price_per_unit:
+                  rowData.price_per_unit && rowData.price_per_unit !== "-"
+                    ? rowData.price_per_unit
+                    : null,
+                total_amount: rowData.total_amount,
+                fees: 0, // Sempre 0 pois não vem na planilha
+                taxes: 0, // Sempre 0 pois não vem na planilha
+                description: null, // Sempre null pois não vem na planilha
+              },
+            ]);
+
+          if (transactionError) throw transactionError;
+
+          // Se houver conta bancária e tipo de entrada/saída, criar transação financeira
+          if (bankAccounts.length > 0 && rowData.entry_type) {
+            // Verificar se a transação financeira já existe
+            const transactionType =
+              rowData.entry_type === "credit" ? "receita" : "despesa";
+            const transactionValue = rowData.total_amount;
+            let transactionDescription = "";
+
+            // Definir descrição baseada no tipo de transação
+            switch (rowData.transaction_type) {
+              case "DIVIDEND":
+                transactionDescription = `Dividendos de ${investment.name}`;
+                // Não subtrair taxas pois não vem na planilha
+                break;
+              case "BUY":
+                transactionDescription = `Compra de ${investment.name}`;
+                // Não adicionar taxas pois não vem na planilha
+                break;
+              case "SELL":
+                transactionDescription = `Venda de ${investment.name}`;
+                // Não subtrair taxas pois não vem na planilha
+                break;
+              default:
+                transactionDescription = `${
+                  rowData.transaction_type || "Movimentação"
+                } de ${investment.name}`;
+            }
+
+            // Verificar se transação financeira já existe
+            const {
+              data: existingFinancialTransaction,
+              error: financialCheckError,
+            } = await supabase
+              .from("transactions")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("transaction_date", rowData.transaction_date)
+              .eq("type", transactionType)
+              .eq("value", Math.abs(transactionValue))
+              .ilike("description", `%${investment.name}%`)
+              .maybeSingle();
+
+            if (
+              financialCheckError &&
+              financialCheckError.code !== "PGRST116"
+            ) {
+              throw financialCheckError;
+            }
+
+            if (!existingFinancialTransaction) {
+              await supabase.from("transactions").insert([
+                {
+                  user_id: user.id,
+                  type: transactionType,
+                  value: Math.abs(transactionValue),
+                  description: transactionDescription,
+                  bank_account_id: bankAccounts[0].id, // Usar primeira conta como padrão
+                  transaction_date: rowData.transaction_date,
+                  category_id: null,
+                },
+              ]);
+            }
+          }
+
+          importedCount++;
+        }
+      }
+
+      // Contar ativos que foram pulados por estarem zerados
+      const totalAssets = Object.keys(assetGroups).length;
+      const processedAssets = assetsToProcess.length;
+      const skippedAssets = totalAssets - processedAssets;
+
+      console.log(`\n🎯 === RESUMO FINAL DA IMPORTAÇÃO ===`);
+      console.log(`📊 Total de ativos únicos na planilha: ${totalAssets}`);
+      console.log(
+        `✅ Ativos processados (com posição válida): ${processedAssets}`
+      );
+      console.log(`❌ Ativos ignorados (posição zerada): ${skippedAssets}`);
+      console.log(`📝 Transações importadas: ${importedCount}`);
+      console.log(
+        `🔄 Transações ignoradas (duplicadas ou inválidas): ${skippedCount}`
+      );
+
+      if (skippedAssets > 0) {
+        console.log(`\n❌ ATIVOS IGNORADOS (posição zerada):`);
+        Object.entries(assetGroups).forEach(([assetName, transactions]) => {
+          if (!assetsToProcess.find(([name]) => name === assetName)) {
+            const originalNames = [
+              ...new Set(transactions.map((t) => t.original_asset_name)),
+            ];
+            console.log(
+              `  - ${assetName} (nomes originais: ${originalNames.join(", ")})`
+            );
+          }
+        });
+      }
+
+      if (processedAssets > 0) {
+        console.log(`\n🎉 ATIVOS PROCESSADOS COM SUCESSO:`);
+        assetsToProcess.forEach(([assetName, transactions]) => {
+          const originalNames = [
+            ...new Set(transactions.map((t) => t.original_asset_name)),
+          ];
+          console.log(
+            `  - ${assetName} (nomes originais: ${originalNames.join(", ")})`
+          );
+        });
+      }
+
+      if (processedAssets < 5 && totalAssets >= 5) {
+        console.log(
+          `\n⚠️  ATENÇÃO: Esperava-se processar mais ativos. Verifique:`
+        );
+        console.log(
+          `  1. Se os nomes dos ativos estão sendo normalizados corretamente`
+        );
+        console.log(
+          `  2. Se as transações estão sendo calculadas adequadamente`
+        );
+        console.log(`  3. Se não há erros na lógica de agrupamento`);
+        console.log(
+          `  4. Execute novamente a importação para ver logs detalhados`
+        );
+      }
+
+      // Recarregar dados
+      loadInvestments();
+      loadTransactions();
+    } catch (error) {
+      console.error("Erro ao importar dados:", error);
+      throw error;
+    }
   };
 
   const totalInvested = investments.reduce(
@@ -1053,7 +1900,7 @@ const Investments = () => {
 
       {/* Modal de Criação */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Investimento</DialogTitle>
             <DialogDescription>
@@ -1151,25 +1998,7 @@ const Investments = () => {
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="current_amount" className="text-right">
-                Valor Atual *
-              </Label>
-              <Input
-                id="current_amount"
-                type="number"
-                step="0.01"
-                value={formData.current_amount}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    current_amount: e.target.value,
-                  }))
-                }
-                className="col-span-3"
-                placeholder="0.00"
-              />
-            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="purchase_date" className="text-right">
                 Data da Compra *
@@ -1264,7 +2093,7 @@ const Investments = () => {
 
       {/* Modal de Edição */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Investimento</DialogTitle>
             <DialogDescription>
@@ -1362,25 +2191,7 @@ const Investments = () => {
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-current_amount" className="text-right">
-                Valor Atual *
-              </Label>
-              <Input
-                id="edit-current_amount"
-                type="number"
-                step="0.01"
-                value={formData.current_amount}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    current_amount: e.target.value,
-                  }))
-                }
-                className="col-span-3"
-                placeholder="0.00"
-              />
-            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-purchase_date" className="text-right">
                 Data da Compra *
@@ -1478,7 +2289,7 @@ const Investments = () => {
         open={transactionModalOpen}
         onOpenChange={setTransactionModalOpen}
       >
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Nova Transação - {selectedInvestment?.name}
@@ -1750,7 +2561,7 @@ const Investments = () => {
         open={transactionsViewOpen}
         onOpenChange={setTransactionsViewOpen}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Transações - {selectedInvestment?.name}</DialogTitle>
             <DialogDescription>
