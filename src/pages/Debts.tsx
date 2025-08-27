@@ -213,12 +213,12 @@ const Debts = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardHeader>
@@ -236,53 +236,53 @@ const Debts = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dívidas</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dívidas</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gerencie suas dívidas e acompanhe o progresso dos pagamentos
           </p>
         </div>
-        <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
+          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
           Nova Dívida
         </Button>
       </div>
 
       {/* Resumo das Dívidas */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card style={{ background: 'var(--expense-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Total em Dívidas</CardTitle>
-            <CreditCard className="h-4 w-4 text-white" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">Total em Dívidas</CardTitle>
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
+          <CardContent className="p-4 sm:p-6">
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(totalCurrent)}
             </div>
           </CardContent>
         </Card>
 
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Pago</CardTitle>
-            <CreditCard className="h-4 w-4 text-success" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Pago</CardTitle>
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
+          <CardContent className="p-4 sm:p-6">
+            <div className="text-lg sm:text-2xl font-bold text-success">
               {formatCurrency(totalPaid)}
             </div>
           </CardContent>
         </Card>
 
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Original</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Valor Original</CardTitle>
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="p-4 sm:p-6">
+            <div className="text-lg sm:text-2xl font-bold">
               {formatCurrency(totalOriginal)}
             </div>
           </CardContent>
@@ -292,20 +292,20 @@ const Debts = () => {
       {/* Lista de Dívidas */}
       {debts.length === 0 ? (
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma dívida cadastrada</h3>
-            <p className="text-muted-foreground text-center mb-6">
+          <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 p-4 sm:p-6">
+            <CreditCard className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Nenhuma dívida cadastrada</h3>
+            <p className="text-sm sm:text-base text-muted-foreground text-center mb-4 sm:mb-6">
               Mantenha o controle das suas dívidas registrando-as aqui
             </p>
-            <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               Registrar Dívida
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
           {debts.map((debt) => {
             const progress = getDebtProgress(debt.original_amount, debt.current_amount);
             const daysUntilDue = getDaysUntilDue(debt.due_date);
@@ -314,45 +314,45 @@ const Debts = () => {
 
             return (
               <Card key={debt.id} style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{debt.name}</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-lg truncate">{debt.name}</CardTitle>
                     <CardDescription>
                       {debt.creditor && (
                         <span className="text-xs">Credor: {debt.creditor}</span>
                       )}
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => openEditModal(debt)}>
-                      <Edit className="h-4 w-4" />
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => openEditModal(debt)} className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                      <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(debt)}>
-                      <Trash2 className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-7 w-7 sm:h-8 sm:w-8 p-0" onClick={() => openDeleteModal(debt)}>
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Valor Original</p>
-                        <p className="font-semibold">{formatCurrency(debt.original_amount)}</p>
+                        <p className="text-muted-foreground text-xs sm:text-sm">Valor Original</p>
+                        <p className="font-semibold text-sm sm:text-base">{formatCurrency(debt.original_amount)}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Valor Atual</p>
-                        <p className="font-semibold text-expense">{formatCurrency(debt.current_amount)}</p>
+                        <p className="text-muted-foreground text-xs sm:text-sm">Valor Atual</p>
+                        <p className="font-semibold text-expense text-sm sm:text-base">{formatCurrency(debt.current_amount)}</p>
                       </div>
                     </div>
                     
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-muted-foreground">Progresso do Pagamento</span>
-                        <span className="text-sm font-semibold text-success">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Progresso do Pagamento</span>
+                        <span className="text-xs sm:text-sm font-semibold text-success">
                           {progress.toFixed(1)}%
                         </span>
                       </div>
-                      <Progress value={progress} className="h-2" />
+                      <Progress value={progress} className="h-1.5 sm:h-2" />
                       <p className="text-xs mt-1 text-success">
                         Pago: {formatCurrency(debt.original_amount - debt.current_amount)}
                       </p>
@@ -361,12 +361,12 @@ const Debts = () => {
                     {debt.due_date && (
                       <div className="flex items-center gap-2">
                         <AlertCircle 
-                          className={`h-4 w-4 ${
+                          className={`h-3 w-3 sm:h-4 sm:w-4 ${
                             isOverdue ? 'text-destructive' : isDueSoon ? 'text-warning' : 'text-muted-foreground'
                           }`} 
                         />
-                        <div className="flex-1">
-                          <p className="text-sm">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm">
                             <span className="text-muted-foreground">Vencimento: </span>
                             <span className={isOverdue ? 'text-destructive font-semibold' : ''}>
                               {formatDate(debt.due_date)}
@@ -415,7 +415,7 @@ const Debts = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nome da Dívida</Label>
+              <Label htmlFor="name" className="text-sm font-medium">Nome da Dívida</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -423,9 +423,9 @@ const Debts = () => {
                 placeholder="Ex: Cartão de Crédito"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="original_amount">Valor Original</Label>
+                <Label htmlFor="original_amount" className="text-sm font-medium">Valor Original</Label>
                 <Input
                   id="original_amount"
                   type="number"
@@ -436,7 +436,7 @@ const Debts = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="current_amount">Valor Atual</Label>
+                <Label htmlFor="current_amount" className="text-sm font-medium">Valor Atual</Label>
                 <Input
                   id="current_amount"
                   type="number"
@@ -447,9 +447,9 @@ const Debts = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="interest_rate">Taxa de Juros (% ao ano)</Label>
+                <Label htmlFor="interest_rate" className="text-sm font-medium">Taxa de Juros (% ao ano)</Label>
                 <Input
                   id="interest_rate"
                   type="number"
@@ -460,7 +460,7 @@ const Debts = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="due_date">Data de Vencimento</Label>
+                <Label htmlFor="due_date" className="text-sm font-medium">Data de Vencimento</Label>
                 <Input
                   id="due_date"
                   type="date"
@@ -470,7 +470,7 @@ const Debts = () => {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="creditor">Credor</Label>
+              <Label htmlFor="creditor" className="text-sm font-medium">Credor</Label>
               <Input
                 id="creditor"
                 value={formData.creditor}
@@ -479,7 +479,7 @@ const Debts = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Descrição</Label>
+              <Label htmlFor="description" className="text-sm font-medium">Descrição</Label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -488,11 +488,11 @@ const Debts = () => {
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleCreate} style={{ background: 'var(--expense-gradient)' }}>
+            <Button onClick={handleCreate} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
               Criar Dívida
             </Button>
           </div>
@@ -507,7 +507,7 @@ const Debts = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-name">Nome da Dívida</Label>
+              <Label htmlFor="edit-name" className="text-sm font-medium">Nome da Dívida</Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -515,9 +515,9 @@ const Debts = () => {
                 placeholder="Ex: Cartão de Crédito"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-original_amount">Valor Original</Label>
+                <Label htmlFor="edit-original_amount" className="text-sm font-medium">Valor Original</Label>
                 <Input
                   id="edit-original_amount"
                   type="number"
@@ -528,7 +528,7 @@ const Debts = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-current_amount">Valor Atual</Label>
+                <Label htmlFor="edit-current_amount" className="text-sm font-medium">Valor Atual</Label>
                 <Input
                   id="edit-current_amount"
                   type="number"
@@ -539,9 +539,9 @@ const Debts = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-interest_rate">Taxa de Juros (% ao ano)</Label>
+                <Label htmlFor="edit-interest_rate" className="text-sm font-medium">Taxa de Juros (% ao ano)</Label>
                 <Input
                   id="edit-interest_rate"
                   type="number"
@@ -552,7 +552,7 @@ const Debts = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-due_date">Data de Vencimento</Label>
+                <Label htmlFor="edit-due_date" className="text-sm font-medium">Data de Vencimento</Label>
                 <Input
                   id="edit-due_date"
                   type="date"
@@ -562,7 +562,7 @@ const Debts = () => {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-creditor">Credor</Label>
+              <Label htmlFor="edit-creditor" className="text-sm font-medium">Credor</Label>
               <Input
                 id="edit-creditor"
                 value={formData.creditor}
@@ -571,7 +571,7 @@ const Debts = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-description">Descrição</Label>
+              <Label htmlFor="edit-description" className="text-sm font-medium">Descrição</Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
@@ -580,11 +580,11 @@ const Debts = () => {
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleEdit} style={{ background: 'var(--expense-gradient)' }}>
+            <Button onClick={handleEdit} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
               Salvar Alterações
             </Button>
           </div>
@@ -601,9 +601,9 @@ const Debts = () => {
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1600,24 +1600,25 @@ const Investments = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Investimentos</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Investimentos</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Acompanhe a performance dos seus investimentos
           </p>
         </div>
         <Button
           style={{ background: "var(--investment-gradient)" }}
           onClick={openCreateModal}
+          className="w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Novo Investimento
+          <span className="sm:inline">Novo Investimento</span>
         </Button>
       </div>
 
       {/* Resumo dos Investimentos */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card
           style={{
             background: "var(--investment-gradient)",
@@ -1625,13 +1626,13 @@ const Investments = () => {
           }}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">
               Total Investido
             </CardTitle>
             <PiggyBank className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(totalInvested)}
             </div>
           </CardContent>
@@ -1644,11 +1645,11 @@ const Investments = () => {
           }}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Atual</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Valor Atual</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-2xl font-bold">
               {formatCurrency(totalCurrent)}
             </div>
           </CardContent>
@@ -1661,7 +1662,7 @@ const Investments = () => {
           }}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rentabilidade</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Rentabilidade</CardTitle>
             <TrendingUp
               className={`h-4 w-4 ${
                 totalReturn.returnValue >= 0 ? "text-success" : "text-expense"
@@ -1670,7 +1671,7 @@ const Investments = () => {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-bold ${
+              className={`text-lg sm:text-2xl font-bold ${
                 totalReturn.returnValue >= 0 ? "text-success" : "text-expense"
               }`}
             >
@@ -1716,7 +1717,7 @@ const Investments = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
           {investments.map((investment) => {
             const returnData = calculateReturn(
               investment.initial_amount,
@@ -1730,85 +1731,90 @@ const Investments = () => {
                   boxShadow: "var(--shadow-soft)",
                 }}
               >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      {investment.name}
-                      {investment.symbol && (
-                        <span className="text-sm text-muted-foreground ml-2">
-                          ({investment.symbol})
-                        </span>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {investmentTypeLabels[investment.type]}
-                      </Badge>
-                      {investment.brokerage && (
-                        <Badge variant="secondary" className="text-xs">
-                          {investment.brokerage}
+                <CardHeader className="pb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg truncate">
+                        {investment.name}
+                        {investment.symbol && (
+                          <span className="text-sm text-muted-foreground ml-2">
+                            ({investment.symbol})
+                          </span>
+                        )}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="text-xs">
+                          {investmentTypeLabels[investment.type]}
                         </Badge>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openTransactionsView(investment)}
-                      title="Ver transações"
-                    >
-                      <History className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openTransactionModal(investment)}
-                      title="Nova transação"
-                    >
-                      <ArrowUpDown className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditModal(investment)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação não pode ser desfeita. Isso irá deletar
-                            permanentemente o investimento "{investment.name}".
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(investment.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        {investment.brokerage && (
+                          <Badge variant="secondary" className="text-xs">
+                            {investment.brokerage}
+                          </Badge>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openTransactionsView(investment)}
+                        title="Ver transações"
+                        className="h-8 w-8 p-0"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openTransactionModal(investment)}
+                        title="Nova transação"
+                        className="h-8 w-8 p-0"
+                      >
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditModal(investment)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           >
-                            Deletar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação não pode ser desfeita. Isso irá deletar
+                              permanentemente o investimento "{investment.name}".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(investment.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
+                            >
+                              Deletar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
                       <div>
                         <p className="text-muted-foreground">Quantidade</p>
                         <p className="font-semibold">
@@ -1900,7 +1906,7 @@ const Investments = () => {
 
       {/* Modal de Criação */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto mx-2">
           <DialogHeader>
             <DialogTitle>Novo Investimento</DialogTitle>
             <DialogDescription>
@@ -1908,8 +1914,8 @@ const Investments = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="name" className="sm:text-right">
                 Nome *
               </Label>
               <Input
@@ -1918,12 +1924,12 @@ const Investments = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Ex: Tesouro Direto IPCA+"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="symbol" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="symbol" className="sm:text-right">
                 Símbolo
               </Label>
               <Input
@@ -1932,12 +1938,12 @@ const Investments = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, symbol: e.target.value }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Ex: PETR4, AAPL"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="type" className="sm:text-right">
                 Tipo *
               </Label>
               <Select
@@ -1951,7 +1957,7 @@ const Investments = () => {
                     | "outros"
                 ) => setFormData((prev) => ({ ...prev, type: value }))}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1963,8 +1969,8 @@ const Investments = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="quantity" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="quantity" className="sm:text-right">
                 Quantidade *
               </Label>
               <Input
@@ -1975,12 +1981,12 @@ const Investments = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, quantity: e.target.value }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="1.0"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="initial_amount" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="initial_amount" className="sm:text-right">
                 Valor Inicial *
               </Label>
               <Input
@@ -1994,13 +2000,13 @@ const Investments = () => {
                     initial_amount: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="purchase_date" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="purchase_date" className="sm:text-right">
                 Data da Compra *
               </Label>
               <Input
@@ -2013,11 +2019,11 @@ const Investments = () => {
                     purchase_date: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="brokerage" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="brokerage" className="sm:text-right">
                 Corretora
               </Label>
               <Input
@@ -2029,12 +2035,12 @@ const Investments = () => {
                     brokerage: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Ex: XP Investimentos, Clear"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="currency" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="currency" className="sm:text-right">
                 Moeda
               </Label>
               <Select
@@ -2043,7 +2049,7 @@ const Investments = () => {
                   setFormData((prev) => ({ ...prev, currency: value }))
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue placeholder="Selecione a moeda" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2055,8 +2061,8 @@ const Investments = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="description" className="sm:text-right">
                 Descrição
               </Label>
               <Textarea
@@ -2068,13 +2074,13 @@ const Investments = () => {
                     description: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Descrição opcional do investimento"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
             <Button
@@ -2084,6 +2090,7 @@ const Investments = () => {
                 !formData.quantity.trim() ||
                 !formData.initial_amount.trim()
               }
+              className="w-full sm:w-auto"
             >
               Criar Investimento
             </Button>
@@ -2093,7 +2100,7 @@ const Investments = () => {
 
       {/* Modal de Edição */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto mx-2">
           <DialogHeader>
             <DialogTitle>Editar Investimento</DialogTitle>
             <DialogDescription>
@@ -2101,8 +2108,8 @@ const Investments = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-name" className="sm:text-right">
                 Nome *
               </Label>
               <Input
@@ -2111,12 +2118,12 @@ const Investments = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Ex: Tesouro Direto IPCA+"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-symbol" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-symbol" className="sm:text-right">
                 Símbolo
               </Label>
               <Input
@@ -2125,12 +2132,12 @@ const Investments = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, symbol: e.target.value }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Ex: PETR4, AAPL"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-type" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-type" className="sm:text-right">
                 Tipo *
               </Label>
               <Select
@@ -2144,7 +2151,7 @@ const Investments = () => {
                     | "outros"
                 ) => setFormData((prev) => ({ ...prev, type: value }))}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2156,8 +2163,8 @@ const Investments = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-quantity" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-quantity" className="sm:text-right">
                 Quantidade *
               </Label>
               <Input
@@ -2168,12 +2175,12 @@ const Investments = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, quantity: e.target.value }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="1.0"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-initial_amount" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-initial_amount" className="sm:text-right">
                 Valor Inicial *
               </Label>
               <Input
@@ -2187,13 +2194,13 @@ const Investments = () => {
                     initial_amount: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-purchase_date" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-purchase_date" className="sm:text-right">
                 Data da Compra *
               </Label>
               <Input
@@ -2206,11 +2213,11 @@ const Investments = () => {
                     purchase_date: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-brokerage" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-brokerage" className="sm:text-right">
                 Corretora
               </Label>
               <Input
@@ -2222,12 +2229,12 @@ const Investments = () => {
                     brokerage: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Ex: XP Investimentos, Clear"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-currency" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-currency" className="sm:text-right">
                 Moeda
               </Label>
               <Select
@@ -2236,7 +2243,7 @@ const Investments = () => {
                   setFormData((prev) => ({ ...prev, currency: value }))
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue placeholder="Selecione a moeda" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2248,8 +2255,8 @@ const Investments = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-description" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="edit-description" className="sm:text-right">
                 Descrição
               </Label>
               <Textarea
@@ -2261,13 +2268,13 @@ const Investments = () => {
                     description: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Descrição opcional do investimento"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
             <Button
@@ -2277,6 +2284,7 @@ const Investments = () => {
                 !formData.quantity.trim() ||
                 !formData.initial_amount.trim()
               }
+              className="w-full sm:w-auto"
             >
               Salvar Alterações
             </Button>
@@ -2289,9 +2297,9 @@ const Investments = () => {
         open={transactionModalOpen}
         onOpenChange={setTransactionModalOpen}
       >
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto mx-2">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               Nova Transação - {selectedInvestment?.name}
             </DialogTitle>
             <DialogDescription>
@@ -2299,8 +2307,8 @@ const Investments = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="transaction_type" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="transaction_type" className="sm:text-right">
                 Tipo *
               </Label>
               <Select
@@ -2333,7 +2341,7 @@ const Investments = () => {
                   }));
                 }}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2349,8 +2357,8 @@ const Investments = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="transaction_date" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="transaction_date" className="sm:text-right">
                 Data *
               </Label>
               <Input
@@ -2363,11 +2371,11 @@ const Investments = () => {
                     transaction_date: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="bank_account_id" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="bank_account_id" className="sm:text-right">
                 Conta Bancária *
               </Label>
               <Select
@@ -2379,7 +2387,7 @@ const Investments = () => {
                   }))
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue placeholder="Selecione a conta" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2394,8 +2402,8 @@ const Investments = () => {
             {(transactionFormData.transaction_type === "BUY" ||
               transactionFormData.transaction_type === "SELL") && (
               <>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="quantity" className="text-right">
+                <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="quantity" className="sm:text-right">
                     Quantidade
                   </Label>
                   <Input
@@ -2421,12 +2429,12 @@ const Investments = () => {
                         };
                       });
                     }}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     placeholder="0.0"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="price_per_unit" className="text-right">
+                <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+                  <Label htmlFor="price_per_unit" className="sm:text-right">
                     Preço por Unidade
                   </Label>
                   <Input
@@ -2451,14 +2459,14 @@ const Investments = () => {
                         };
                       });
                     }}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     placeholder="0.00"
                   />
                 </div>
               </>
             )}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="total_amount" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="total_amount" className="sm:text-right">
                 Valor Total *
               </Label>
               <Input
@@ -2472,12 +2480,12 @@ const Investments = () => {
                     total_amount: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fees" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="fees" className="sm:text-right">
                 Taxas
               </Label>
               <Input
@@ -2491,12 +2499,12 @@ const Investments = () => {
                     fees: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="taxes" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="taxes" className="sm:text-right">
                 Impostos
               </Label>
               <Input
@@ -2510,12 +2518,12 @@ const Investments = () => {
                     taxes: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="transaction_description" className="text-right">
+            <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="transaction_description" className="sm:text-right">
                 Descrição
               </Label>
               <Textarea
@@ -2527,15 +2535,16 @@ const Investments = () => {
                     description: e.target.value,
                   }))
                 }
-                className="col-span-3"
+                className="sm:col-span-3"
                 placeholder="Descrição opcional da transação"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setTransactionModalOpen(false)}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
@@ -2549,6 +2558,7 @@ const Investments = () => {
                   (!transactionFormData.quantity.trim() ||
                     !transactionFormData.price_per_unit.trim()))
               }
+              className="w-full sm:w-auto"
             >
               Criar Transação
             </Button>
@@ -2561,9 +2571,9 @@ const Investments = () => {
         open={transactionsViewOpen}
         onOpenChange={setTransactionsViewOpen}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[700px] max-h-[90vh] overflow-y-auto mx-2">
           <DialogHeader>
-            <DialogTitle>Transações - {selectedInvestment?.name}</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Transações - {selectedInvestment?.name}</DialogTitle>
             <DialogDescription>
               Histórico completo de transações deste investimento
             </DialogDescription>
@@ -2582,7 +2592,7 @@ const Investments = () => {
                 {selectedInvestment &&
                   getInvestmentTransactions(selectedInvestment.id).map(
                     (transaction) => (
-                      <Card key={transaction.id} className="p-4">
+                      <Card key={transaction.id} className="p-3 sm:p-4">
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
@@ -2649,7 +2659,7 @@ const Investments = () => {
             )}
           </div>
           <DialogFooter>
-            <Button onClick={() => setTransactionsViewOpen(false)}>
+            <Button onClick={() => setTransactionsViewOpen(false)} className="w-full sm:w-auto">
               Fechar
             </Button>
           </DialogFooter>

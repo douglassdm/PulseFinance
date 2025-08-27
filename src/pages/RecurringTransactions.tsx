@@ -569,48 +569,48 @@ const RecurringTransactions = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Transações Recorrentes</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Transações Recorrentes</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Gerencie suas receitas e despesas automáticas
           </p>
         </div>
-        <Button onClick={openCreateModal} style={{ background: 'var(--income-gradient)' }}>
+        <Button onClick={openCreateModal} style={{ background: 'var(--income-gradient)' }} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Nova Recorrência
         </Button>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total</CardTitle>
             <RefreshCw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recurringTransactions.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{recurringTransactions.length}</div>
           </CardContent>
         </Card>
 
         <Card style={{ background: 'var(--income-gradient)', boxShadow: 'var(--shadow-soft)' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Ativas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">Ativas</CardTitle>
             <Play className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{activeTransactions.length}</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{activeTransactions.length}</div>
           </CardContent>
         </Card>
 
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receitas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Receitas</CardTitle>
             <RefreshCw className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">
+            <div className="text-xl sm:text-2xl font-bold text-success">
               {recurringTransactions.filter(t => t.type === 'receita').length}
             </div>
           </CardContent>
@@ -618,11 +618,11 @@ const RecurringTransactions = () => {
 
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Despesas</CardTitle>
             <RefreshCw className="h-4 w-4 text-expense" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-expense">
+            <div className="text-xl sm:text-2xl font-bold text-expense">
               {recurringTransactions.filter(t => t.type === 'despesa').length}
             </div>
           </CardContent>
@@ -654,41 +654,60 @@ const RecurringTransactions = () => {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Conta</TableHead>
-                  <TableHead>Frequência</TableHead>
-                  <TableHead>Próxima</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activeTransactions.map((transaction) => {
-                  const daysUntilNext = getDaysUntilNext(transaction.next_occurrence_date);
-                  const isUpcoming = daysUntilNext <= 3 && daysUntilNext >= 0;
-                  const isOverdue = daysUntilNext < 0;
+            <>
+              {/* Mobile-friendly layout for active transactions */}
+              <div className="block sm:hidden space-y-3">
+              {activeTransactions.map((transaction) => {
+                const daysUntilNext = getDaysUntilNext(transaction.next_occurrence_date);
+                const isUpcoming = daysUntilNext <= 3 && daysUntilNext >= 0;
+                const isOverdue = daysUntilNext < 0;
 
-                  return (
-                    <TableRow key={transaction.id}>
-                      <TableCell className="font-medium">
-                        {transaction.description || 'Sem descrição'}
-                      </TableCell>
-                      <TableCell>
-                        {transaction.categories?.name || 'Sem categoria'}
-                      </TableCell>
-                      <TableCell>{transaction.bank_accounts.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {frequencyLabels[transaction.frequency] || transaction.frequency}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
+                return (
+                  <Card key={transaction.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium truncate">
+                            {transaction.description || 'Sem descrição'}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {transaction.categories?.name || 'Sem categoria'} • {transaction.bank_accounts.name}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button variant="ghost" size="sm" title="Executar agora" onClick={() => handleExecuteNow(transaction)} className="h-8 w-8 p-0">
+                            <Play className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => openEditModal(transaction)} className="h-8 w-8 p-0">
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => openPauseModal(transaction)}>
+                            <Pause className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => openDeleteModal(transaction)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {frequencyLabels[transaction.frequency] || transaction.frequency}
+                          </Badge>
+                          <Badge 
+                            variant={transaction.type === 'receita' ? 'default' : 'destructive'}
+                            className={`text-xs ${transaction.type === 'receita' ? 'bg-success text-success-foreground' : 'bg-expense text-expense-foreground'}`}
+                          >
+                            {transaction.type === 'receita' ? 'Receita' : 'Despesa'}
+                          </Badge>
+                        </div>
+                        <span className={`font-mono font-semibold ${transaction.type === 'receita' ? 'text-success' : 'text-expense'}`}>
+                          {transaction.type === 'receita' ? '+' : '-'}{formatCurrency(Math.abs(transaction.value))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Próxima:</span>
+                        <div className="text-right">
                           <p className={isOverdue ? 'text-destructive font-semibold' : isUpcoming ? 'text-warning font-semibold' : ''}>
                             {formatDate(transaction.next_occurrence_date)}
                           </p>
@@ -701,41 +720,99 @@ const RecurringTransactions = () => {
                             }
                           </p>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={transaction.type === 'receita' ? 'default' : 'destructive'}
-                          className={transaction.type === 'receita' ? 'bg-success text-success-foreground' : 'bg-expense text-expense-foreground'}
-                        >
-                          {transaction.type === 'receita' ? 'Receita' : 'Despesa'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        <span className={transaction.type === 'receita' ? 'text-success' : 'text-expense'}>
-                          {transaction.type === 'receita' ? '+' : '-'}{formatCurrency(Math.abs(transaction.value))}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" size="sm" title="Executar agora" onClick={() => handleExecuteNow(transaction)}>
-                            <Play className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => openEditModal(transaction)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openPauseModal(transaction)}>
-                            <Pause className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(transaction)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+            
+            {/* Desktop table layout */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Conta</TableHead>
+                    <TableHead>Frequência</TableHead>
+                    <TableHead>Próxima</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeTransactions.map((transaction) => {
+                    const daysUntilNext = getDaysUntilNext(transaction.next_occurrence_date);
+                    const isUpcoming = daysUntilNext <= 3 && daysUntilNext >= 0;
+                    const isOverdue = daysUntilNext < 0;
+
+                    return (
+                      <TableRow key={transaction.id}>
+                        <TableCell className="font-medium">
+                          {transaction.description || 'Sem descrição'}
+                        </TableCell>
+                        <TableCell>
+                          {transaction.categories?.name || 'Sem categoria'}
+                        </TableCell>
+                        <TableCell>{transaction.bank_accounts.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {frequencyLabels[transaction.frequency] || transaction.frequency}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <p className={isOverdue ? 'text-destructive font-semibold' : isUpcoming ? 'text-warning font-semibold' : ''}>
+                              {formatDate(transaction.next_occurrence_date)}
+                            </p>
+                            <p className={`text-xs ${isOverdue ? 'text-destructive' : isUpcoming ? 'text-warning' : 'text-muted-foreground'}`}>
+                              {isOverdue 
+                                ? `Atrasada ${Math.abs(daysUntilNext)} dia(s)`
+                                : daysUntilNext === 0
+                                ? 'Hoje!'
+                                : `Em ${daysUntilNext} dia(s)`
+                              }
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={transaction.type === 'receita' ? 'default' : 'destructive'}
+                            className={transaction.type === 'receita' ? 'bg-success text-success-foreground' : 'bg-expense text-expense-foreground'}
+                          >
+                            {transaction.type === 'receita' ? 'Receita' : 'Despesa'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          <span className={transaction.type === 'receita' ? 'text-success' : 'text-expense'}>
+                            {transaction.type === 'receita' ? '+' : '-'}{formatCurrency(Math.abs(transaction.value))}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="sm" title="Executar agora" onClick={() => handleExecuteNow(transaction)}>
+                              <Play className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => openEditModal(transaction)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openPauseModal(transaction)}>
+                              <Pause className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(transaction)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -753,62 +830,104 @@ const RecurringTransactions = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inactiveTransactions.map((transaction) => (
-                  <TableRow key={transaction.id} className="opacity-60">
-                    <TableCell className="font-medium">
-                      {transaction.description || 'Sem descrição'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 text-sm">
-                        <p>{formatDate(transaction.start_date)} até</p>
-                        <p>{transaction.end_date ? formatDate(transaction.end_date) : 'Indefinido'}</p>
+            <>
+              {/* Mobile-friendly layout for inactive transactions */}
+              <div className="block sm:hidden space-y-3">
+              {inactiveTransactions.map((transaction) => (
+                <Card key={transaction.id} className="p-4 opacity-60">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium truncate">
+                          {transaction.description || 'Sem descrição'}
+                        </h4>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>{formatDate(transaction.start_date)} até</p>
+                          <p>{transaction.end_date ? formatDate(transaction.end_date) : 'Indefinido'}</p>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button variant="ghost" size="sm" title="Reativar" onClick={() => handleReactivate(transaction)} className="h-8 w-8 p-0">
+                          <Play className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => openDeleteModal(transaction)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <Badge variant="outline" className="text-xs">
                         {transaction.type === 'receita' ? 'Receita' : 'Despesa'}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatCurrency(transaction.value)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="sm" title="Reativar" onClick={() => handleReactivate(transaction)}>
-                          <Play className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(transaction)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                      <span className="font-mono font-semibold">
+                        {formatCurrency(transaction.value)}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            
+            {/* Desktop table layout */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Período</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {inactiveTransactions.map((transaction) => (
+                    <TableRow key={transaction.id} className="opacity-60">
+                      <TableCell className="font-medium">
+                        {transaction.description || 'Sem descrição'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1 text-sm">
+                          <p>{formatDate(transaction.start_date)} até</p>
+                          <p>{transaction.end_date ? formatDate(transaction.end_date) : 'Indefinido'}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {transaction.type === 'receita' ? 'Receita' : 'Despesa'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatCurrency(transaction.value)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" size="sm" title="Reativar" onClick={() => handleReactivate(transaction)}>
+                            <Play className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => openDeleteModal(transaction)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            </>
           </CardContent>
         </Card>
       )}
 
       {/* Modal para Nova Transação Recorrente */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl mx-2">
           <DialogHeader>
             <DialogTitle>Nova Transação Recorrente</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="type">Tipo</Label>
                 <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData({ ...formData, type: value, category_id: '' })}>
@@ -842,7 +961,7 @@ const RecurringTransactions = () => {
                 placeholder="Descrição da transação recorrente"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="category_id">Categoria</Label>
                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
@@ -874,7 +993,7 @@ const RecurringTransactions = () => {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-2">
                 <Label htmlFor="frequency">Frequência</Label>
                 <Select value={formData.frequency} onValueChange={(value) => setFormData({ ...formData, frequency: value })}>
@@ -909,11 +1028,11 @@ const RecurringTransactions = () => {
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleCreate} style={{ background: 'var(--income-gradient)' }}>
+            <Button onClick={handleCreate} style={{ background: 'var(--income-gradient)' }} className="w-full sm:w-auto">
               Criar Recorrência
             </Button>
           </div>
@@ -922,12 +1041,12 @@ const RecurringTransactions = () => {
 
       {/* Modal para Editar Transação Recorrente */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl mx-2">
           <DialogHeader>
             <DialogTitle>Editar Transação Recorrente</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="edit-type">Tipo</Label>
                 <Select value={formData.type} onValueChange={(value: 'receita' | 'despesa') => setFormData({ ...formData, type: value, category_id: '' })}>
@@ -961,7 +1080,7 @@ const RecurringTransactions = () => {
                 placeholder="Descrição da transação recorrente"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="edit-category_id">Categoria</Label>
                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
@@ -993,7 +1112,7 @@ const RecurringTransactions = () => {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-2">
                 <Label htmlFor="edit-frequency">Frequência</Label>
                 <Select value={formData.frequency} onValueChange={(value) => setFormData({ ...formData, frequency: value })}>
@@ -1028,11 +1147,11 @@ const RecurringTransactions = () => {
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleEdit} style={{ background: 'var(--income-gradient)' }}>
+            <Button onClick={handleEdit} style={{ background: 'var(--income-gradient)' }} className="w-full sm:w-auto">
               Salvar Alterações
             </Button>
           </div>
@@ -1041,7 +1160,7 @@ const RecurringTransactions = () => {
 
       {/* Modal de Confirmação de Exclusão */}
       <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1049,9 +1168,9 @@ const RecurringTransactions = () => {
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1060,7 +1179,7 @@ const RecurringTransactions = () => {
 
       {/* Modal de Confirmação de Pausa */}
       <AlertDialog open={pauseModalOpen} onOpenChange={setPauseModalOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Pausar Transação Recorrente</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1068,9 +1187,9 @@ const RecurringTransactions = () => {
               Ela será movida para a lista de transações inativas.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePause} className="bg-warning text-warning-foreground hover:bg-warning/90">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePause} className="bg-warning text-warning-foreground hover:bg-warning/90 w-full sm:w-auto">
               Pausar
             </AlertDialogAction>
           </AlertDialogFooter>

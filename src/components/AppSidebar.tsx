@@ -10,6 +10,7 @@ import {
   Calendar,
   Settings,
   LogOut,
+  BarChart3,
 } from "lucide-react";
 
 import {
@@ -42,6 +43,7 @@ const mainItems = [
 const managementItems = [
   { title: "Categorias", url: "/categories", icon: Tag },
   { title: "Recorrentes", url: "/recurring", icon: Calendar },
+  { title: "Relatórios", url: "/reports", icon: BarChart3 },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];
 

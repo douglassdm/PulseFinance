@@ -377,7 +377,7 @@ const Dashboard = () => {
           <Skeleton className="h-4 w-64" />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -397,49 +397,50 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">Visão geral das suas finanças</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Visão geral das suas finanças</p>
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={openTransactionModal}>
+          <Button variant="outline" size="sm" onClick={openTransactionModal} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
-            Nova Transação
+            <span className="sm:inline">Nova Transação</span>
           </Button>
         </div>
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           style={{
             background: "var(--card-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo do Mês</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium">Saldo do Mês</CardTitle>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-6 w-6 sm:h-8 sm:w-8 p-0"
               onClick={() => setBalanceVisible(!balanceVisible)}
             >
               {balanceVisible ? (
-                <Eye className="h-4 w-4" />
+                <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
               ) : (
-                <EyeOff className="h-4 w-4" />
+                <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
               )}
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold">
               {balanceVisible ? formatCurrency(stats?.balance || 0) : "••••••"}
             </div>
             <p
-              className={`text-xs ${
+              className={`text-xs flex items-center ${
                 (stats?.balance || 0) >= 0 ? "text-success" : "text-expense"
               }`}
             >
@@ -458,20 +459,21 @@ const Dashboard = () => {
             background: "var(--income-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">
               Receitas
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-white" />
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(stats?.totalIncome || 0)}
             </div>
             <p className={`text-xs text-white/80 ${stats?.incomeGrowth && stats.incomeGrowth < 0 ? 'text-red-200' : ''}`}>
               {stats?.incomeGrowth !== undefined 
-                ? `${formatPercentage(stats.incomeGrowth)} em relação ao mês passado`
+                ? `${formatPercentage(stats.incomeGrowth)} vs mês anterior`
                 : "Carregando..."}
             </p>
           </CardContent>
@@ -482,20 +484,21 @@ const Dashboard = () => {
             background: "var(--expense-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">
               Despesas
             </CardTitle>
-            <TrendingDown className="h-4 w-4 text-white" />
+            <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(stats?.totalExpense || 0)}
             </div>
             <p className={`text-xs text-white/80 ${stats?.expenseGrowth && stats.expenseGrowth > 0 ? 'text-red-200' : ''}`}>
               {stats?.expenseGrowth !== undefined 
-                ? `${formatPercentage(stats.expenseGrowth)} em relação ao mês passado`
+                ? `${formatPercentage(stats.expenseGrowth)} vs mês anterior`
                 : "Carregando..."}
             </p>
           </CardContent>
@@ -506,15 +509,16 @@ const Dashboard = () => {
             background: "var(--investment-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">
               Investimentos
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-white" />
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(stats?.totalInvestments || 0)}
             </div>
             <p className={`text-xs text-white/80 ${stats?.investmentGrowth && stats.investmentGrowth < 0 ? 'text-red-200' : ''}`}>
@@ -527,21 +531,22 @@ const Dashboard = () => {
       </div>
 
       {/* Cards Secundários */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card
           style={{
             background: "var(--card-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Dívidas Totais
             </CardTitle>
-            <PiggyBank className="h-4 w-4 text-muted-foreground" />
+            <PiggyBank className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-expense">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold text-expense">
               {formatCurrency(stats?.totalDebts || 0)}
             </div>
           </CardContent>
@@ -552,13 +557,14 @@ const Dashboard = () => {
             background: "var(--card-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Metas Ativas</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium">Metas Ativas</CardTitle>
+            <Target className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-goal">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold text-goal">
               {formatCurrency(stats?.totalGoals || 0)}
             </div>
           </CardContent>
@@ -569,15 +575,16 @@ const Dashboard = () => {
             background: "var(--card-gradient)",
             boxShadow: "var(--shadow-soft)",
           }}
+          className="p-4 sm:p-6 sm:col-span-2 lg:col-span-1"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Contas Bancárias
             </CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="px-0">
+            <div className="text-lg sm:text-2xl font-bold">
               {stats?.accountsCount || 0}
             </div>
           </CardContent>
@@ -779,6 +786,7 @@ const Dashboard = () => {
                 !formData.bank_account_id ||
                 !formData.transaction_date
               }
+              className="w-full sm:w-auto"
             >
               Criar Transação
             </Button>

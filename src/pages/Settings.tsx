@@ -221,7 +221,7 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
@@ -247,15 +247,15 @@ const Settings = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Configurações</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Configurações</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Gerencie sua conta e preferências do aplicativo
         </p>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {/* Informações da Conta */}
         <Card
           style={{
@@ -263,19 +263,19 @@ const Settings = () => {
             boxShadow: "var(--shadow-soft)",
           }}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <User className="h-4 w-4 sm:h-5 sm:w-5" />
               Informações da Conta
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Atualize suas informações pessoais
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+          <CardContent className="space-y-4 p-4 sm:p-6">
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
+                <Label htmlFor="name" className="text-sm font-medium">Nome completo</Label>
                 <Input
                   id="name"
                   value={name}
@@ -284,7 +284,7 @@ const Settings = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <Input
                   id="email"
                   value={user?.email || ""}
@@ -310,8 +310,9 @@ const Settings = () => {
               onClick={saveProfile}
               disabled={saving}
               style={{ background: "var(--income-gradient)" }}
+              className="w-full sm:w-auto"
             >
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               {saving ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </CardContent>
@@ -324,19 +325,19 @@ const Settings = () => {
             boxShadow: "var(--shadow-soft)",
           }}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
               Segurança
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Altere sua senha e configurações de segurança
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+          <CardContent className="space-y-4 p-4 sm:p-6">
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="new-password">Nova senha</Label>
+                <Label htmlFor="new-password" className="text-sm font-medium">Nova senha</Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -346,7 +347,7 @@ const Settings = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar senha</Label>
+                <Label htmlFor="confirm-password" className="text-sm font-medium">Confirmar senha</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -361,8 +362,9 @@ const Settings = () => {
               onClick={changePassword}
               disabled={saving || !newPassword || !confirmPassword}
               variant="outline"
+              className="w-full sm:w-auto"
             >
-              <Shield className="h-4 w-4 mr-2" />
+              <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               {saving ? "Alterando..." : "Alterar Senha"}
             </Button>
           </CardContent>
@@ -375,16 +377,16 @@ const Settings = () => {
             boxShadow: "var(--shadow-soft)",
           }}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Database className="h-4 w-4 sm:h-5 sm:w-5" />
               Dados e Privacidade
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Gerencie seus dados e configurações de privacidade
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
             <div className="space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Dados da conta</h4>
@@ -393,8 +395,8 @@ const Settings = () => {
                   permanentemente sua conta.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline">
-                    <Database className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    <Database className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Exportar Dados
                   </Button>
                 </div>
@@ -409,20 +411,20 @@ const Settings = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Ações irreversíveis que afetam permanentemente sua conta.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant="outline"
                     onClick={handleSignOut}
-                    className="border-muted-foreground"
+                    className="border-muted-foreground w-full sm:w-auto"
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
+                    <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Sair da Conta
                   </Button>
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
+                      <Button variant="destructive" className="w-full sm:w-auto">
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                         Excluir Conta
                       </Button>
                     </AlertDialogTrigger>
@@ -437,11 +439,11 @@ const Settings = () => {
                           dados de nossos servidores.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+                        <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={deleteAccount}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
                         >
                           Sim, excluir conta
                         </AlertDialogAction>

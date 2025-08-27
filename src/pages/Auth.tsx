@@ -101,21 +101,21 @@ const Auth = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-screen flex items-center justify-center p-4 sm:p-6"
       style={{ background: "var(--bg-gradient)" }}
     >
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+      <div className="w-full max-w-sm sm:max-w-md">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center mb-4">
             <div
-              className="p-3 rounded-xl"
-              style={{ background: "var(--income-gradient)" }}
+              className="p-2 sm:p-3 rounded-xl"
+              style={{ background: "linear-gradient(90deg, #006ac7 0%, #0084ff 100%)" }}
             >
-              <DollarSign className="h-8 w-8 text-white" />
+              <img src="/lg-semfundo.png" className="h-6 sm:h-8"/>
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2">PulseFinance</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">PulseFinance</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Controle completo das suas finanças pessoais
           </p>
         </div>
@@ -124,15 +124,15 @@ const Auth = () => {
           className="shadow-lg"
           style={{ background: "var(--card-gradient)" }}
         >
-          <CardHeader className="text-center pb-2">
-            <CardTitle>Bem-vindo!</CardTitle>
-            <CardDescription>
+          <CardHeader className="text-center pb-2 p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Bem-vindo!</CardTitle>
+            <CardDescription className="text-sm">
               Entre na sua conta ou crie uma nova para começar
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <Tabs defaultValue="signin" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2 text-sm">
                 <TabsTrigger value="signin">Entrar</TabsTrigger>
                 <TabsTrigger value="signup">Cadastrar</TabsTrigger>
               </TabsList>
@@ -140,7 +140,7 @@ const Auth = () => {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -148,10 +148,11 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Senha</Label>
+                    <Label htmlFor="signin-password" className="text-sm font-medium">Senha</Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -159,16 +160,17 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full text-sm"
                     disabled={loading}
-                    style={{ background: "var(--income-gradient)" }}
+                    style={{ background: "linear-gradient(90deg, #006ac7 0%, #0084ff 100%)" }}
                   >
                     {loading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                     )}
                     Entrar
                   </Button>
@@ -178,7 +180,7 @@ const Auth = () => {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome completo</Label>
+                    <Label htmlFor="signup-name" className="text-sm font-medium">Nome completo</Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -186,10 +188,11 @@ const Auth = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -197,10 +200,11 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
+                    <Label htmlFor="signup-password" className="text-sm font-medium">Senha</Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -208,16 +212,17 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full text-sm"
                     disabled={loading}
-                    style={{ background: "var(--income-gradient)" }}
+                    style={{ background: "linear-gradient(90deg, #006ac7 0%, #0084ff 100%)" }}
                   >
                     {loading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                     )}
                     Criar conta
                   </Button>

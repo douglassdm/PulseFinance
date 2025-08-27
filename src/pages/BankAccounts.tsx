@@ -161,12 +161,12 @@ const BankAccounts = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardHeader>
@@ -184,74 +184,75 @@ const BankAccounts = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Contas Bancárias</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Contas Bancárias</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gerencie suas contas e acompanhe seus saldos
           </p>
         </div>
-        <Button style={{ background: 'var(--income-gradient)' }} onClick={openCreateModal}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button style={{ background: 'var(--income-gradient)' }} onClick={openCreateModal} className="w-full sm:w-auto">
+          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
           Nova Conta
         </Button>
       </div>
 
       {accounts.length === 0 ? (
         <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma conta cadastrada</h3>
-            <p className="text-muted-foreground text-center mb-6">
+          <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 p-4 sm:p-6">
+            <CreditCard className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Nenhuma conta cadastrada</h3>
+            <p className="text-sm sm:text-base text-muted-foreground text-center mb-6">
               Comece criando sua primeira conta bancária para gerenciar suas finanças
             </p>
-            <Button style={{ background: 'var(--income-gradient)' }} onClick={openCreateModal}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button style={{ background: 'var(--income-gradient)' }} onClick={openCreateModal} className="w-full sm:w-auto">
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               Criar Primeira Conta
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {accounts.map((account) => (
             <Card key={account.id} style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">{account.name}</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">{account.name}</CardTitle>
                   <CardDescription className="text-xs">
                     Criada em {formatDate(account.created_at)}
                   </CardDescription>
                 </div>
-                <div className="p-2 rounded-lg" style={{ background: 'var(--income-gradient)' }}>
-                  <CreditCard className="h-4 w-4 text-white" />
+                <div className="p-1.5 sm:p-2 rounded-lg" style={{ background: 'var(--income-gradient)' }}>
+                  <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Saldo Inicial</p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Saldo Inicial</p>
+                    <p className="text-lg sm:text-2xl font-bold">
                       {formatCurrency(account.initial_balance)}
                     </p>
                   </div>
                   
                   {account.description && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Descrição</p>
-                      <p className="text-sm">{account.description}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Descrição</p>
+                      <p className="text-xs sm:text-sm">{account.description}</p>
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-4">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(account)}>
-                      <Edit className="h-4 w-4 mr-2" />
+                  <div className="flex flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
+                    <Button variant="outline" size="sm" className="flex-1 w-full" onClick={() => openEditModal(account)}>
+                      <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       Editar
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive w-full sm:w-auto">
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-0" />
+                          <span className="sm:hidden ml-2">Deletar</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -261,9 +262,9 @@ const BankAccounts = () => {
                             Esta ação não pode ser desfeita. Isso irá deletar permanentemente a conta bancária "{account.name}".
                           </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(account.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+                          <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(account.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto">
                             Deletar
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -287,20 +288,20 @@ const BankAccounts = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-left sm:text-right font-medium">
                 Nome *
               </Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="col-span-3"
+                className="col-span-1 sm:col-span-3"
                 placeholder="Ex: Conta Corrente"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="balance" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="balance" className="text-left sm:text-right font-medium">
                 Saldo Inicial
               </Label>
               <Input
@@ -309,28 +310,28 @@ const BankAccounts = () => {
                 step="0.01"
                 value={formData.initial_balance}
                 onChange={(e) => setFormData(prev => ({ ...prev, initial_balance: e.target.value }))}
-                className="col-span-3"
+                className="col-span-1 sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-left sm:text-right font-medium">
                 Descrição
               </Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="col-span-3"
+                className="col-span-1 sm:col-span-3"
                 placeholder="Descrição opcional da conta"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleCreate} disabled={!formData.name.trim()}>
+            <Button onClick={handleCreate} disabled={!formData.name.trim()} className="w-full sm:w-auto">
               Criar Conta
             </Button>
           </DialogFooter>
@@ -347,20 +348,20 @@ const BankAccounts = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-left sm:text-right font-medium">
                 Nome *
               </Label>
               <Input
                 id="edit-name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="col-span-3"
+                className="col-span-1 sm:col-span-3"
                 placeholder="Ex: Conta Corrente"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-balance" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-balance" className="text-left sm:text-right font-medium">
                 Saldo Inicial
               </Label>
               <Input
@@ -369,28 +370,28 @@ const BankAccounts = () => {
                 step="0.01"
                 value={formData.initial_balance}
                 onChange={(e) => setFormData(prev => ({ ...prev, initial_balance: e.target.value }))}
-                className="col-span-3"
+                className="col-span-1 sm:col-span-3"
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-description" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-description" className="text-left sm:text-right font-medium">
                 Descrição
               </Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="col-span-3"
+                className="col-span-1 sm:col-span-3"
                 placeholder="Descrição opcional da conta"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleEdit} disabled={!formData.name.trim()}>
+            <Button onClick={handleEdit} disabled={!formData.name.trim()} className="w-full sm:w-auto">
               Salvar Alterações
             </Button>
           </DialogFooter>
