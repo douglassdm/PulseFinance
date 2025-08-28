@@ -1,73 +1,172 @@
-# Welcome to your Lovable project
+# PulseFinance 💰
 
-## Project info
+Sistema completo de gestão financeira pessoal desenvolvido com tecnologias modernas para ajudar você a controlar suas finanças de forma inteligente e eficiente.
 
-**URL**: https://lovable.dev/projects/d3365ff9-e301-4d87-a450-59183a846bac
+## 🚀 Sobre o Projeto
 
-## How can I edit this code?
+O PulseFinance é uma aplicação web moderna para controle financeiro pessoal que oferece:
 
-There are several ways of editing your application.
+- **Dashboard Intuitivo**: Visualize suas finanças de forma clara com gráficos e estatísticas
+- **Gestão de Transações**: Controle completo de receitas e despesas
+- **Contas Bancárias**: Gerencie múltiplas contas e acompanhe saldos
+- **Categorias Personalizadas**: Organize suas transações por categorias
+- **Investimentos**: Acompanhe e gerencie seus investimentos
+- **Metas Financeiras**: Defina e acompanhe objetivos financeiros
+- **Controle de Dívidas**: Monitore e organize seus débitos
+- **Relatórios Detalhados**: Análises completas de suas movimentações
+- **Transações Recorrentes**: Automatize lançamentos periódicos
+- **Tags e Etiquetas**: Sistema flexível de organização
+- **Tema Escuro/Claro**: Interface adaptável às suas preferências
 
-**Use Lovable**
+## 🛠️ Tecnologias Utilizadas
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d3365ff9-e301-4d87-a450-59183a846bac) and start prompting.
+- **Frontend**: React 18 com TypeScript
+- **Bundler**: Vite (desenvolvimento rápido)
+- **Estilização**: Tailwind CSS + shadcn/ui
+- **Roteamento**: React Router DOM
+- **Estado**: React Query (TanStack Query)
+- **Formulários**: React Hook Form com validação Zod
+- **Database**: Supabase (PostgreSQL)
+- **Autenticação**: Supabase Auth
+- **Gráficos**: Recharts
+- **Ícones**: Lucide React
+- **Tema**: next-themes
+- **Notificações**: Sonner
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📋 Pré-requisitos
 
-**Use your preferred IDE**
+Antes de começar, você precisará ter instalado em sua máquina:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- [Node.js](https://nodejs.org/) (versão 18 ou superior)
+- [npm](https://www.npmjs.com/) ou [yarn](https://yarnpkg.com/)
+- [Git](https://git-scm.com/)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🔧 Instalação e Configuração
 
-Follow these steps:
+### 1. Clone o repositório
+```bash
+git clone <URL_DO_SEU_REPOSITORIO>
+cd PulseFinance
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+### 2. Instale as dependências
+```bash
 npm i
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3. Configure as variáveis de ambiente
+Crie um arquivo `.env.local` na raiz do projeto com:
+```
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+```
+
+### 4. Inicie o servidor de desenvolvimento
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+A aplicação estará disponível em `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📝 Scripts Disponíveis
 
-**Use GitHub Codespaces**
+- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run build` - Gera build de produção
+- `npm run build:dev` - Gera build de desenvolvimento
+- `npm run preview` - Visualiza o build de produção
+- `npm run lint` - Executa o linter ESLint
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🏗️ Estrutura do Projeto
 
-## What technologies are used for this project?
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   ├── ui/             # Componentes da interface (shadcn/ui)
+│   ├── AppSidebar.tsx  # Sidebar da aplicação
+│   ├── AuthProvider.tsx # Provedor de autenticação
+│   ├── Layout.tsx      # Layout principal
+│   └── ProtectedRoute.tsx # Proteção de rotas
+├── hooks/              # Hooks personalizados
+├── integrations/       # Integrações externas (Supabase)
+├── lib/               # Utilitários e configurações
+├── pages/             # Páginas da aplicação
+└── config/            # Configurações do sistema
+```
 
-This project is built with:
+## 🌟 Funcionalidades Principais
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Dashboard
+- Visão geral das finanças
+- Gráficos de receitas e despesas
+- Estatísticas em tempo real
+- Cards informativos
 
-## How can I deploy this project?
+### Transações
+- Registro de receitas e despesas
+- Categorização automática
+- Filtros avançados
+- Exportação de dados
 
-Simply open [Lovable](https://lovable.dev/projects/d3365ff9-e301-4d87-a450-59183a846bac) and click on Share -> Publish.
+### Investimentos
+- Acompanhamento de carteira
+- Cálculo de rendimentos
+- Histórico de movimentações
+- Análise de performance
 
-## Can I connect a custom domain to my Lovable project?
+### Relatórios
+- Relatórios mensais e anuais
+- Gráficos comparativos
+- Análise por categorias
+- Exportação para Excel
 
-Yes, you can!
+## 🔐 Segurança e Autenticação
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- Autenticação segura via Supabase
+- Proteção de rotas privadas
+- Isolamento de dados por usuário
+- Criptografia de dados sensíveis
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🎨 Interface e Experiência
+
+- Design responsivo (mobile-first)
+- Tema escuro e claro
+- Interface intuitiva e moderna
+- Componentes acessíveis
+
+## 📱 Responsividade
+
+A aplicação foi desenvolvida com foco em responsividade, funcionando perfeitamente em:
+- 📱 Dispositivos móveis
+- 📊 Tablets
+- 🖥️ Desktops
+
+## 🚀 Deploy
+
+### Opção 1: Lovable Platform
+1. Acesse [Lovable](https://lovable.dev/projects/d3365ff9-e301-4d87-a450-59183a846bac)
+2. Clique em Share → Publish
+
+### Opção 2: Build Manual
+```bash
+npm run build
+```
+
+## 🤝 Contribuição
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
+3. Commit suas mudanças (`git commit -m 'Add: MinhaFeature'`)
+4. Push para a branch (`git push origin feature/MinhaFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 👨‍💻 Desenvolvido com ❤️
+
+Desenvolvido com as melhores práticas de desenvolvimento web moderno, focando em performance, segurança e experiência do usuário.
+
+---
+
+**PulseFinance** - Sua plataforma completa de gestão financeira! 🎯
