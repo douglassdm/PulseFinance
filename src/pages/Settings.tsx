@@ -9,9 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -249,7 +246,9 @@ const Settings = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Configurações</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          Configurações
+        </h2>
         <p className="text-sm sm:text-base text-muted-foreground">
           Gerencie sua conta e preferências do aplicativo
         </p>
@@ -275,7 +274,9 @@ const Settings = () => {
           <CardContent className="space-y-4 p-4 sm:p-6">
             <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium">Nome completo</Label>
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nome completo
+                </Label>
                 <Input
                   id="name"
                   value={name}
@@ -284,7 +285,9 @@ const Settings = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   value={user?.email || ""}
@@ -337,7 +340,9 @@ const Settings = () => {
           <CardContent className="space-y-4 p-4 sm:p-6">
             <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="new-password" className="text-sm font-medium">Nova senha</Label>
+                <Label htmlFor="new-password" className="text-sm font-medium">
+                  Nova senha
+                </Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -347,7 +352,12 @@ const Settings = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password" className="text-sm font-medium">Confirmar senha</Label>
+                <Label
+                  htmlFor="confirm-password"
+                  className="text-sm font-medium"
+                >
+                  Confirmar senha
+                </Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -389,22 +399,6 @@ const Settings = () => {
           <CardContent className="space-y-4 p-4 sm:p-6">
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2">Dados da conta</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Você pode exportar todos os seus dados ou excluir
-                  permanentemente sua conta.
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <Database className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                    Exportar Dados
-                  </Button>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
                 <h4 className="font-medium mb-2 text-destructive">
                   Zona de Perigo
                 </h4>
@@ -423,7 +417,10 @@ const Settings = () => {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full sm:w-auto">
+                      <Button
+                        variant="destructive"
+                        className="w-full sm:w-auto"
+                      >
                         <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                         Excluir Conta
                       </Button>
@@ -440,7 +437,9 @@ const Settings = () => {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-                        <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel className="w-full sm:w-auto">
+                          Cancelar
+                        </AlertDialogCancel>
                         <AlertDialogAction
                           onClick={deleteAccount}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
