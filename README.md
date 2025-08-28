@@ -44,24 +44,29 @@ Antes de começar, você precisará ter instalado em sua máquina:
 ## 🔧 Instalação e Configuração
 
 ### 1. Clone o repositório
+
 ```bash
 git clone <URL_DO_SEU_REPOSITORIO>
 cd PulseFinance
 ```
 
 ### 2. Instale as dependências
+
 ```bash
 npm i
 ```
 
 ### 3. Configure as variáveis de ambiente
+
 Crie um arquivo `.env.local` na raiz do projeto com:
+
 ```
 VITE_SUPABASE_URL=sua_url_do_supabase
 VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
 ```
 
 ### 4. Inicie o servidor de desenvolvimento
+
 ```bash
 npm run dev
 ```
@@ -96,24 +101,28 @@ src/
 ## 🌟 Funcionalidades Principais
 
 ### Dashboard
+
 - Visão geral das finanças
 - Gráficos de receitas e despesas
 - Estatísticas em tempo real
 - Cards informativos
 
 ### Transações
+
 - Registro de receitas e despesas
 - Categorização automática
 - Filtros avançados
 - Exportação de dados
 
 ### Investimentos
+
 - Acompanhamento de carteira
 - Cálculo de rendimentos
 - Histórico de movimentações
 - Análise de performance
 
 ### Relatórios
+
 - Relatórios mensais e anuais
 - Gráficos comparativos
 - Análise por categorias
@@ -136,17 +145,15 @@ src/
 ## 📱 Responsividade
 
 A aplicação foi desenvolvida com foco em responsividade, funcionando perfeitamente em:
+
 - 📱 Dispositivos móveis
 - 📊 Tablets
 - 🖥️ Desktops
 
 ## 🚀 Deploy
 
-### Opção 1: Lovable Platform
-1. Acesse [Lovable](https://lovable.dev/projects/d3365ff9-e301-4d87-a450-59183a846bac)
-2. Clique em Share → Publish
+### Opção 1: Build Manual
 
-### Opção 2: Build Manual
 ```bash
 npm run build
 ```
