@@ -20,6 +20,7 @@ import Tags from "./pages/Tags";
 import RecurringTransactions from "./pages/RecurringTransactions";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import ApiDocs from "./pages/ApiDocs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -109,6 +110,13 @@ const App = () => (
                   <ProtectedRoute>
                     <Layout>
                       <Settings />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/api-docs" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <ApiDocs />
                     </Layout>
                   </ProtectedRoute>
                 } />

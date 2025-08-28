@@ -99,7 +99,7 @@ const Dashboard = () => {
 
       // Buscar transações do mês atual e anterior
       const currentDate = new Date();
-      
+
       // Mês atual
       const startOfMonth = new Date(
         currentDate.getFullYear(),
@@ -115,7 +115,7 @@ const Dashboard = () => {
       )
         .toISOString()
         .split("T")[0];
-      
+
       // Mês anterior
       const startOfLastMonth = new Date(
         currentDate.getFullYear(),
@@ -220,13 +220,19 @@ const Dashboard = () => {
         .reduce((sum, t) => sum + Number(t.value), 0);
 
       // Calcular porcentagens de crescimento
-      const incomeGrowth = lastMonthIncome > 0 
-        ? ((totalIncome - lastMonthIncome) / lastMonthIncome) * 100 
-        : totalIncome > 0 ? 100 : 0;
+      const incomeGrowth =
+        lastMonthIncome > 0
+          ? ((totalIncome - lastMonthIncome) / lastMonthIncome) * 100
+          : totalIncome > 0
+          ? 100
+          : 0;
 
-      const expenseGrowth = lastMonthExpense > 0 
-        ? ((totalExpense - lastMonthExpense) / lastMonthExpense) * 100 
-        : totalExpense > 0 ? 100 : 0;
+      const expenseGrowth =
+        lastMonthExpense > 0
+          ? ((totalExpense - lastMonthExpense) / lastMonthExpense) * 100
+          : totalExpense > 0
+          ? 100
+          : 0;
 
       const totalInvestments = (investmentsResult.data || []).reduce(
         (sum, inv) => sum + Number(inv.current_amount),
@@ -234,14 +240,17 @@ const Dashboard = () => {
       );
 
       // Calcular investimentos do início do mês para crescimento mensal
-      const lastMonthInvestments = (lastMonthInvestmentsResult.data || []).reduce(
-        (sum, inv) => sum + Number(inv.current_amount),
-        0
-      );
+      const lastMonthInvestments = (
+        lastMonthInvestmentsResult.data || []
+      ).reduce((sum, inv) => sum + Number(inv.current_amount), 0);
 
-      const investmentGrowth = lastMonthInvestments > 0 
-        ? ((totalInvestments - lastMonthInvestments) / lastMonthInvestments) * 100 
-        : totalInvestments > 0 ? 100 : 0;
+      const investmentGrowth =
+        lastMonthInvestments > 0
+          ? ((totalInvestments - lastMonthInvestments) / lastMonthInvestments) *
+            100
+          : totalInvestments > 0
+          ? 100
+          : 0;
 
       const totalDebts = (debtsResult.data || []).reduce(
         (sum, debt) => sum + Number(debt.current_amount),
@@ -399,12 +408,21 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground text-sm sm:text-base">Visão geral das suas finanças</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Dashboard
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Visão geral das suas finanças
+          </p>
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={openTransactionModal} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openTransactionModal}
+            className="w-full sm:w-auto"
+          >
             <Plus className="h-4 w-4 mr-2" />
             <span className="sm:inline">Nova Transação</span>
           </Button>
@@ -421,7 +439,9 @@ const Dashboard = () => {
           className="p-4 sm:p-6"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
-            <CardTitle className="text-xs sm:text-sm font-medium">Saldo do Mês</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              Saldo do Mês
+            </CardTitle>
             <Button
               variant="ghost"
               size="sm"
@@ -471,8 +491,14 @@ const Dashboard = () => {
             <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(stats?.totalIncome || 0)}
             </div>
-            <p className={`text-xs text-white/80 ${stats?.incomeGrowth && stats.incomeGrowth < 0 ? 'text-red-200' : ''}`}>
-              {stats?.incomeGrowth !== undefined 
+            <p
+              className={`text-xs text-white/80 ${
+                stats?.incomeGrowth && stats.incomeGrowth < 0
+                  ? "text-red-200"
+                  : ""
+              }`}
+            >
+              {stats?.incomeGrowth !== undefined
                 ? `${formatPercentage(stats.incomeGrowth)} vs mês anterior`
                 : "Carregando..."}
             </p>
@@ -496,8 +522,14 @@ const Dashboard = () => {
             <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(stats?.totalExpense || 0)}
             </div>
-            <p className={`text-xs text-white/80 ${stats?.expenseGrowth && stats.expenseGrowth > 0 ? 'text-red-200' : ''}`}>
-              {stats?.expenseGrowth !== undefined 
+            <p
+              className={`text-xs text-white/80 ${
+                stats?.expenseGrowth && stats.expenseGrowth > 0
+                  ? "text-red-200"
+                  : ""
+              }`}
+            >
+              {stats?.expenseGrowth !== undefined
                 ? `${formatPercentage(stats.expenseGrowth)} vs mês anterior`
                 : "Carregando..."}
             </p>
@@ -521,8 +553,14 @@ const Dashboard = () => {
             <div className="text-lg sm:text-2xl font-bold text-white">
               {formatCurrency(stats?.totalInvestments || 0)}
             </div>
-            <p className={`text-xs text-white/80 ${stats?.investmentGrowth && stats.investmentGrowth < 0 ? 'text-red-200' : ''}`}>
-              {stats?.investmentGrowth !== undefined 
+            <p
+              className={`text-xs text-white/80 ${
+                stats?.investmentGrowth && stats.investmentGrowth < 0
+                  ? "text-red-200"
+                  : ""
+              }`}
+            >
+              {stats?.investmentGrowth !== undefined
                 ? `${formatPercentage(stats.investmentGrowth)} este mês`
                 : "Carregando..."}
             </p>
@@ -560,7 +598,9 @@ const Dashboard = () => {
           className="p-4 sm:p-6"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
-            <CardTitle className="text-xs sm:text-sm font-medium">Metas Ativas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              Metas Ativas
+            </CardTitle>
             <Target className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-0">
