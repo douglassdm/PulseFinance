@@ -86,12 +86,16 @@ export const Layout = ({ children }: LayoutProps) => {
           const nextDate = new Date(transaction.next_occurrence_date);
           const daysUntil = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           
-          if (daysUntil <= 3 && daysUntil >= 0) {
+          if (daysUntil <= 5 && daysUntil >= 0) {
+            const isReceita = transaction.type === 'receita';
+            const timeText = daysUntil === 1 ? 'dia' : 'dias';
+            const actionText = isReceita ? 'próxima em' : 'vence em';
+            
             notifications.push({
               id: `recurring-${transaction.id}`,
               type: 'recurring',
               title: 'Transação Recorrente Próxima',
-              message: `${transaction.description} vence em ${daysUntil} dia(s) - ${formatCurrency(transaction.value)}`,
+              message: `${transaction.description} ${actionText} ${daysUntil} ${timeText} - ${formatCurrency(transaction.value)}`,
               icon: Calendar,
               priority: daysUntil <= 1 ? 'high' : 'medium',
               date: nextDate,
@@ -118,7 +122,7 @@ export const Layout = ({ children }: LayoutProps) => {
               id: `debt-${debt.id}`,
               type: 'debt',
               title: 'Dívida Vencendo',
-              message: `${debt.name} vence em ${daysUntil} dia(s) - ${formatCurrency(debt.current_amount)}`,
+              message: `${debt.name} vence em ${daysUntil} ${daysUntil === 1 ? 'dia' : 'dias'} - ${formatCurrency(debt.current_amount)}`,
               icon: AlertTriangle,
               priority: daysUntil <= 3 ? 'high' : 'medium',
               date: dueDate,
@@ -172,7 +176,7 @@ export const Layout = ({ children }: LayoutProps) => {
               id: `goal-deadline-${goal.id}`,
               type: 'goal',
               title: 'Meta com Prazo Próximo',
-              message: `Meta de ${goal.type} vence em ${daysUntil} dia(s) e está em ${progress.toFixed(0)}%`,
+              message: `Meta de ${goal.type} vence em ${daysUntil} ${daysUntil === 1 ? 'dia' : 'dias'} e está em ${progress.toFixed(0)}%`,
               icon: Target,
               priority: 'medium',
               date: targetDate,
@@ -272,12 +276,21 @@ export const Layout = ({ children }: LayoutProps) => {
 
   const getTimeAgo = (date: Date) => {
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const diff = date.getTime() - now.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
     
-    if (days === 0) return 'Hoje';
-    if (days === 1) return 'Ontem';
-    if (days < 7) return `${days} dias atrás`;
+    // Data futura
+    if (diff > 0) {
+      if (days === 0) return 'Hoje';
+      if (days === 1) return 'Amanhã';
+      return `Em ${days} ${days === 1 ? 'dia' : 'dias'}`;
+    }
+    
+    // Data passada
+    const pastDays = Math.abs(Math.floor(diff / (1000 * 60 * 60 * 24)));
+    if (pastDays === 0) return 'Hoje';
+    if (pastDays === 1) return 'Ontem';
+    if (pastDays < 7) return `${pastDays} dias atrás`;
     return date.toLocaleDateString('pt-BR');
   };
 
