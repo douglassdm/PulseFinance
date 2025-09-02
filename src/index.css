@@ -1,0 +1,315 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 12% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 12% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 12% 13%;
+
+    --primary: 220 91% 52%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 12% 13%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 12% 13%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 91% 52%;
+
+    --radius: 0.75rem;
+
+    /* Financial App Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 71% 45%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --income: 142 76% 36%;
+    --income-light: 142 71% 45%;
+    --income-gradient: linear-gradient(
+      135deg,
+      hsl(142 76% 36%),
+      hsl(142 71% 45%)
+    );
+
+    --expense: 0 84% 60%;
+    --expense-light: 0 72% 50%;
+    --expense-gradient: linear-gradient(135deg, hsl(0 84% 60%), hsl(0 72% 50%));
+
+    --investment: 262 83% 58%;
+    --investment-light: 262 73% 65%;
+    --investment-gradient: linear-gradient(
+      135deg,
+      hsl(262 83% 58%),
+      hsl(262 73% 65%)
+    );
+
+    --goal: 220 91% 52%;
+    --goal-light: 220 81% 60%;
+    --goal-gradient: linear-gradient(
+      135deg,
+      hsl(220 91% 52%),
+      hsl(220 81% 60%)
+    );
+
+    /* Backgrounds */
+    --bg-gradient: linear-gradient(135deg, hsl(220 14% 96%), hsl(0 0% 100%));
+    --card-gradient: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 14% 98%));
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(220 14% 85%);
+    --shadow-medium: 0 8px 25px -8px hsl(220 14% 70%);
+    --shadow-strong: 0 25px 50px -12px hsl(220 14% 50%);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dark mode financial colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 76% 36%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --income: 142 71% 45%;
+    --income-light: 142 76% 36%;
+    --income-gradient: linear-gradient(
+      135deg,
+      hsl(142 71% 45%),
+      hsl(142 76% 36%)
+    );
+
+    --expense: 0 72% 50%;
+    --expense-light: 0 84% 60%;
+    --expense-gradient: linear-gradient(135deg, hsl(0 72% 50%), hsl(0 84% 60%));
+
+    --investment: 262 73% 65%;
+    --investment-light: 262 83% 58%;
+    --investment-gradient: linear-gradient(
+      135deg,
+      hsl(262 73% 65%),
+      hsl(262 83% 58%)
+    );
+
+    --goal: 220 81% 60%;
+    --goal-light: 220 91% 52%;
+    --goal-gradient: linear-gradient(
+      135deg,
+      hsl(220 81% 60%),
+      hsl(220 91% 52%)
+    );
+
+    /* Dark mode backgrounds */
+    --bg-gradient: linear-gradient(
+      135deg,
+      hsl(222.2 84% 4.9%),
+      hsl(217.2 32.6% 17.5%)
+    );
+    --card-gradient: linear-gradient(
+      135deg,
+      hsl(222.2 84% 4.9%),
+      hsl(217.2 32.6% 17.5%)
+    );
+
+    /* Dark mode shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 8px 25px -8px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 25px 50px -12px hsl(0 0% 0% / 0.5);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Sidebar specific styles */
+@layer components {
+  [data-sidebar="sidebar"] {
+    background-color: hsl(var(--sidebar-background));
+    color: hsl(var(--sidebar-foreground));
+    border-right: 1px solid hsl(var(--sidebar-border));
+  }
+
+  [data-sidebar="sidebar"] [data-sidebar="menu-button"][data-active="true"] {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+    font-weight: 500;
+  }
+
+  [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+}
+
+/* Modal and Dialog specific styles */
+@layer components {
+  /* Ensure modals are properly layered */
+  [data-radix-dialog-overlay] {
+    z-index: 50 !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background-color: hsl(0 0% 0% / 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  [data-radix-dialog-content] {
+    z-index: 51 !important;
+    position: fixed !important;
+    background: hsl(var(--background)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: var(--shadow-strong) !important;
+    border-radius: var(--radius) !important;
+    padding: 1.5rem !important;
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Fix for Select component z-index issues */
+  [data-radix-popper-content-wrapper] {
+    z-index: 60 !important;
+  }
+
+  /* Ensure proper background for modals */
+  [data-radix-dialog-overlay] {
+    background-color: hsl(0 0% 0% / 0.8);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Fix for potential white screen issues */
+  body[style*="overflow: hidden"] {
+    background: hsl(var(--background)) !important;
+  }
+
+  /* Ensure dialog content is visible */
+  [data-radix-dialog-content] {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-strong);
+  }
+
+  /* Additional fixes for modal positioning */
+  [data-radix-dialog-content] {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: auto !important;
+    min-width: 400px !important;
+  }
+
+  /* Ensure Select dropdowns appear above modals */
+  [data-radix-select-content] {
+    z-index: 70 !important;
+    background: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-medium) !important;
+  }
+
+  /* Fix for potential React rendering issues */
+  .dialog-open {
+    overflow: hidden !important;
+  }
+
+  /* Ensure proper stacking context */
+  .modal-container {
+    position: relative;
+    z-index: 1000;
+  }
+}

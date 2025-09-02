@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseFinance - Controle Financeiro Pessoal</title>
+    <meta
+      name="description"
+      content="Sistema completo de controle financeiro pessoal. Gerencie receitas, despesas, investimentos e metas de forma simples e intuitiva."
+    />
+    <meta name="author" content="PulseFinance" />
+
+    <meta
+      property="og:title"
+      content="PulseFinance - Controle Financeiro Pessoal"
+    />
+    <meta
+      property="og:description"
+      content="Sistema completo de controle financeiro pessoal. Gerencie receitas, despesas, investimentos e metas de forma simples e intuitiva."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="/logo_PulseFinance.png"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@PulseFinance" />
+    <meta
+      name="twitter:image"
+      content="/logo_PulseFinance.png"
+    />
+    <script>
+      // Prevent flash of unstyled content (FOUC) for theme
+      (function () {
+        const theme = localStorage.getItem("theme");
+        const systemPrefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+
+        if (theme === "dark" || (!theme && systemPrefersDark)) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
