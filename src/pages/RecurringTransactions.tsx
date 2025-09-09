@@ -191,12 +191,12 @@ const RecurringTransactions = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString + 'T00:00:00').toLocaleDateString("pt-BR");
+    return new Date(dateString + "T00:00:00").toLocaleDateString("pt-BR");
   };
 
   const getDaysUntilNext = (nextDate: string) => {
     const today = new Date();
-    const next = new Date(nextDate + 'T00:00:00');
+    const next = new Date(nextDate + "T00:00:00");
     const diffTime = next.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
@@ -297,7 +297,7 @@ const RecurringTransactions = () => {
       const endDate = formData.end_date || null;
 
       // Calculate next occurrence date based on start date and frequency
-      const startDateObj = new Date(startDate + 'T00:00:00');
+      const startDateObj = new Date(startDate + "T00:00:00");
       let nextDate = new Date(startDateObj);
 
       // If start date is today or in the past, create the first transaction and calculate next occurrence
@@ -313,8 +313,9 @@ const RecurringTransactions = () => {
               user_id: user.id,
               type: formData.type,
               value: parseFloat(formData.value),
-              description: `${formData.description.trim()} (Primeira ocorrência automática)`,
+              description: formData.description.trim(),
               transaction_date: startDate,
+              paid_date: null,
               category_id: formData.category_id || null,
               bank_account_id: formData.bank_account_id,
             },
@@ -413,7 +414,7 @@ const RecurringTransactions = () => {
       // If frequency changed, recalculate next occurrence
       if (formData.frequency !== editingTransaction.frequency) {
         const currentNextDate = new Date(
-          editingTransaction.next_occurrence_date + 'T00:00:00'
+          editingTransaction.next_occurrence_date + "T00:00:00"
         );
 
         // Recalculate based on new frequency
@@ -533,7 +534,7 @@ const RecurringTransactions = () => {
     currentOccurrenceDate: string,
     frequency: string
   ): string => {
-    const date = new Date(currentOccurrenceDate + 'T00:00:00');
+    const date = new Date(currentOccurrenceDate + "T00:00:00");
 
     switch (frequency) {
       case "daily":
@@ -576,8 +577,9 @@ const RecurringTransactions = () => {
             user_id: user.id,
             type: transaction.type,
             value: transaction.value,
-            description: `${transaction.description} (Executado manualmente)`,
+            description: transaction.description,
             transaction_date: new Date().toISOString().split("T")[0],
+            paid_date: null,
             category_id: fullTransaction.category_id,
             bank_account_id: fullTransaction.bank_account_id,
           },

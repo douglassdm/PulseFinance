@@ -1,6 +1,9 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Moon, Sun, User, Settings, LogOut, Calendar, Target, TrendingUp, CreditCard, AlertTriangle } from "lucide-react";
+import { useIdleWarning } from "@/hooks/useIdleWarning";
+import { IdleWarningModal } from "@/components/IdleWarningModal";
+import { useRecurringTransactionProcessor } from "@/hooks/useRecurringTransactionProcessor";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -50,6 +53,15 @@ export const Layout = ({ children }: LayoutProps) => {
   const { isDarkMode, setTheme } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  // Timer de inatividade com aviso - logout automático após 30 minutos
+  const { showWarning, extendSession, timeUntilLogout } = useIdleWarning({
+    warningTimeout: 25 * 60 * 1000, // Aviso após 25 minutos
+    logoutTimeout: 30 * 60 * 1000, // Logout após 30 minutos
+  });
+
+  // Processador automático de transações recorrentes
+  useRecurringTransactionProcessor();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -488,6 +500,13 @@ export const Layout = ({ children }: LayoutProps) => {
           <main className="flex-1 p-6">{children}</main>
         </SidebarInset>
       </div>
+
+      {/* Modal de aviso de inatividade */}
+      <IdleWarningModal
+        open={showWarning}
+        onExtendSession={extendSession}
+        timeUntilLogout={timeUntilLogout}
+      />
     </SidebarProvider>
   );
 };

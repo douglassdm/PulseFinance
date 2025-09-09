@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Search, Filter, Calendar } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Filter, Calendar, CheckCircle, Clock, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,6 +56,7 @@ interface Transaction {
   value: number;
   description: string | null;
   transaction_date: string;
+  paid_date: string | null;
   category_id: string | null;
   bank_account_id: string;
   categories: { name: string } | null;
@@ -81,6 +82,7 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>(
     new Date().toISOString().slice(0, 7)
   ); // Formato YYYY-MM
@@ -113,7 +115,7 @@ const Transactions = () => {
         .from("transactions")
         .select(
           `
-          id, type, value, description, transaction_date, category_id, bank_account_id,
+          id, type, value, description, transaction_date, paid_date, category_id, bank_account_id,
           categories(name),
           bank_accounts(name)
         `
@@ -192,6 +194,7 @@ const Transactions = () => {
           category_id: formData.category_id || null,
           bank_account_id: formData.bank_account_id,
           transaction_date: formData.transaction_date,
+          paid_date: null,
         },
       ]);
 
@@ -256,6 +259,25 @@ const Transactions = () => {
     }
   };
 
+  const handleTogglePaymentStatus = async (transaction: Transaction) => {
+    if (!user) return;
+
+    try {
+      const newPaidDate = transaction.paid_date ? null : new Date().toISOString().split('T')[0];
+      
+      const { error } = await supabase
+        .from("transactions")
+        .update({ paid_date: newPaidDate })
+        .eq("id", transaction.id);
+
+      if (error) throw error;
+
+      loadTransactions();
+    } catch (error) {
+      console.error("Erro ao atualizar status de pagamento:", error);
+    }
+  };
+
   const openEditModal = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setFormData({
@@ -283,7 +305,7 @@ const Transactions = () => {
 
   const formatDate = (dateString: string) => {
     // Adicionar o horário para evitar problemas de timezone
-    const date = new Date(dateString + 'T12:00:00');
+    const date = new Date(dateString + "T12:00:00");
     return date.toLocaleDateString("pt-BR");
   };
 
@@ -306,10 +328,14 @@ const Transactions = () => {
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || transaction.type === typeFilter;
+    const matchesPaymentStatus = 
+      paymentStatusFilter === "all" || 
+      (paymentStatusFilter === "paid" && transaction.paid_date) ||
+      (paymentStatusFilter === "pending" && !transaction.paid_date);
     // Garantir que a comparação de data funcione corretamente
     const transactionMonth = transaction.transaction_date.substring(0, 7); // YYYY-MM
     const matchesMonth = transactionMonth === monthFilter;
-    return matchesSearch && matchesType && matchesMonth;
+    return matchesSearch && matchesType && matchesPaymentStatus && matchesMonth;
   });
 
   if (loading) {
@@ -349,7 +375,9 @@ const Transactions = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Transações</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Transações
+          </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             Gerencie todas as suas receitas e despesas
           </p>
@@ -389,7 +417,7 @@ const Transactions = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full sm:w-48">
@@ -399,6 +427,17 @@ const Transactions = () => {
                   <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="receita">Receitas</SelectItem>
                   <SelectItem value="despesa">Despesas</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="paid">Pagos</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -492,7 +531,10 @@ const Transactions = () => {
             <>
               <div className="block sm:hidden space-y-3">
                 {filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="border rounded-lg p-3 space-y-2">
+                  <div
+                    key={transaction.id}
+                    className="border rounded-lg p-3 space-y-2"
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <p className="font-medium text-sm">
@@ -515,7 +557,7 @@ const Transactions = () => {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <div className="flex flex-col space-y-1">
                         <Badge
@@ -530,14 +572,30 @@ const Transactions = () => {
                               : "bg-expense text-white text-xs w-fit"
                           }
                         >
-                          {transaction.type === "receita" ? "Receita" : "Despesa"}
+                          {transaction.type === "receita"
+                            ? "Receita"
+                            : "Despesa"}
                         </Badge>
                         <p className="text-xs text-muted-foreground">
-                          {transaction.categories?.name || "Sem categoria"} • {transaction.bank_accounts.name}
+                          {transaction.categories?.name || "Sem categoria"} •{" "}
+                          {transaction.bank_accounts.name}
                         </p>
                       </div>
-                      
+
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTogglePaymentStatus(transaction)}
+                          className="h-7 w-7 p-0"
+                          title={transaction.paid_date ? `Pago em ${formatDate(transaction.paid_date)}` : 'Pendente de pagamento'}
+                        >
+                          {transaction.paid_date ? (
+                            <CheckCircle className="h-3 w-3 text-success" />
+                          ) : (
+                            <Clock className="h-3 w-3 text-warning" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -565,7 +623,9 @@ const Transactions = () => {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-                              <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                              <AlertDialogCancel className="w-full sm:w-auto">
+                                Cancelar
+                              </AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDelete(transaction.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
@@ -580,18 +640,29 @@ const Transactions = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="hidden sm:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs sm:text-sm">Data</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Descrição</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Categoria</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Conta</TableHead>
+                      <TableHead className="text-xs sm:text-sm">
+                        Descrição
+                      </TableHead>
+                      <TableHead className="text-xs sm:text-sm">
+                        Categoria
+                      </TableHead>
+                      <TableHead className="text-xs sm:text-sm">
+                        Conta
+                      </TableHead>
                       <TableHead className="text-xs sm:text-sm">Tipo</TableHead>
-                      <TableHead className="text-right text-xs sm:text-sm">Valor</TableHead>
-                      <TableHead className="text-right text-xs sm:text-sm">Ações</TableHead>
+                      <TableHead className="text-center text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">
+                        Valor
+                      </TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">
+                        Ações
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -606,7 +677,9 @@ const Transactions = () => {
                         <TableCell className="text-xs sm:text-sm">
                           {transaction.categories?.name || "Sem categoria"}
                         </TableCell>
-                        <TableCell className="text-xs sm:text-sm">{transaction.bank_accounts.name}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          {transaction.bank_accounts.name}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant={
@@ -620,8 +693,24 @@ const Transactions = () => {
                                 : "bg-expense text-white text-xs"
                             }
                           >
-                            {transaction.type === "receita" ? "Receita" : "Despesa"}
+                            {transaction.type === "receita"
+                              ? "Receita"
+                              : "Despesa"}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleTogglePaymentStatus(transaction)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {transaction.paid_date ? (
+                              <CheckCircle className="h-4 w-4 text-success" title={`Pago em ${formatDate(transaction.paid_date)}`} />
+                            ) : (
+                              <Clock className="h-4 w-4 text-warning" title="Pendente de pagamento" />
+                            )}
+                          </Button>
                         </TableCell>
                         <TableCell className="text-right font-mono text-xs sm:text-sm">
                           <span
@@ -657,14 +746,18 @@ const Transactions = () => {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    Tem certeza?
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Esta ação não pode ser desfeita. Isso irá
                                     deletar permanentemente esta transação.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-                                  <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                                  <AlertDialogCancel className="w-full sm:w-auto">
+                                    Cancelar
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleDelete(transaction.id)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
@@ -697,7 +790,10 @@ const Transactions = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="type"
+                className="text-left sm:text-right font-medium"
+              >
                 Tipo *
               </Label>
               <Select
@@ -716,7 +812,10 @@ const Transactions = () => {
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="value" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="value"
+                className="text-left sm:text-right font-medium"
+              >
                 Valor *
               </Label>
               <Input
@@ -732,7 +831,10 @@ const Transactions = () => {
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="description"
+                className="text-left sm:text-right font-medium"
+              >
                 Descrição
               </Label>
               <Textarea
@@ -749,7 +851,10 @@ const Transactions = () => {
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="category" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="category"
+                className="text-left sm:text-right font-medium"
+              >
                 Categoria
               </Label>
               <Select
@@ -773,7 +878,10 @@ const Transactions = () => {
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="bank_account" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="bank_account"
+                className="text-left sm:text-right font-medium"
+              >
                 Conta Bancária *
               </Label>
               <Select
@@ -795,7 +903,10 @@ const Transactions = () => {
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="transaction_date" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="transaction_date"
+                className="text-left sm:text-right font-medium"
+              >
                 Data *
               </Label>
               <Input
@@ -813,7 +924,11 @@ const Transactions = () => {
             </div>
           </div>
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setCreateModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
             <Button
@@ -840,7 +955,10 @@ const Transactions = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-type" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="edit-type"
+                className="text-left sm:text-right font-medium"
+              >
                 Tipo *
               </Label>
               <Select
@@ -859,7 +977,10 @@ const Transactions = () => {
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-value" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="edit-value"
+                className="text-left sm:text-right font-medium"
+              >
                 Valor *
               </Label>
               <Input
@@ -875,7 +996,10 @@ const Transactions = () => {
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-description" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="edit-description"
+                className="text-left sm:text-right font-medium"
+              >
                 Descrição
               </Label>
               <Textarea
@@ -892,7 +1016,10 @@ const Transactions = () => {
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-category" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="edit-category"
+                className="text-left sm:text-right font-medium"
+              >
                 Categoria
               </Label>
               <Select
@@ -916,7 +1043,10 @@ const Transactions = () => {
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-bank_account" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="edit-bank_account"
+                className="text-left sm:text-right font-medium"
+              >
                 Conta Bancária *
               </Label>
               <Select
@@ -938,7 +1068,10 @@ const Transactions = () => {
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-transaction_date" className="text-left sm:text-right font-medium">
+              <Label
+                htmlFor="edit-transaction_date"
+                className="text-left sm:text-right font-medium"
+              >
                 Data *
               </Label>
               <Input
@@ -956,7 +1089,11 @@ const Transactions = () => {
             </div>
           </div>
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setEditModalOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setEditModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
             <Button
