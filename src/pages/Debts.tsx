@@ -1,18 +1,51 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, CreditCard, AlertCircle, DollarSign } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  CreditCard,
+  AlertCircle,
+  DollarSign,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Debt {
   id: string;
@@ -32,6 +65,11 @@ interface BankAccount {
   name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 const Debts = () => {
   const { user } = useAuth();
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -44,25 +82,29 @@ const Debts = () => {
   const [deletingDebt, setDeletingDebt] = useState<Debt | null>(null);
   const [payingDebt, setPayingDebt] = useState<Debt | null>(null);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
-    name: '',
-    original_amount: '',
-    monthly_interest_rate: '',
-    due_date: '',
-    creditor: '',
-    description: ''
+    name: "",
+    original_amount: "",
+    monthly_interest_rate: "",
+    due_date: "",
+    creditor: "",
+    description: "",
   });
   const [paymentData, setPaymentData] = useState({
-    amount: '',
-    bank_account_id: '',
-    description: ''
+    amount: "",
+    bank_account_id: "",
+    description: "",
+    category_id: "",
   });
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [showPaidDebts, setShowPaidDebts] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadDebts();
       loadBankAccounts();
+      loadCategories();
     }
   }, [user]);
 
@@ -71,15 +113,15 @@ const Debts = () => {
 
     try {
       const { data, error } = await supabase
-        .from('debts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("debts")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setDebts(data || []);
     } catch (error) {
-      console.error('Erro ao carregar dívidas:', error);
+      console.error("Erro ao carregar dívidas:", error);
     } finally {
       setLoading(false);
     }
@@ -90,28 +132,45 @@ const Debts = () => {
 
     try {
       const { data, error } = await supabase
-        .from('bank_accounts')
-        .select('id, name')
-        .eq('user_id', user.id);
+        .from("bank_accounts")
+        .select("id, name")
+        .eq("user_id", user.id);
 
       if (error) throw error;
       setBankAccounts(data || []);
     } catch (error) {
-      console.error('Erro ao carregar contas bancárias:', error);
+      console.error("Erro ao carregar contas bancárias:", error);
+    }
+  };
+
+  const loadCategories = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .eq("type", "despesa");
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar categorias:", error);
     }
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Não definido';
-    const date = new Date(dateString + 'T12:00:00');
-    return date.toLocaleDateString('pt-BR');
+    if (!dateString) return "Não definido";
+    const date = new Date(dateString + "T12:00:00");
+    return date.toLocaleDateString("pt-BR");
   };
 
   const getDaysUntilDue = (dueDate: string | null) => {
@@ -136,7 +195,7 @@ const Debts = () => {
 
     // Se há taxa de juros, calcula baseado na data de vencimento
     let baseDate: Date;
-    
+
     if (debt.last_payment_date && debt.last_payment_date !== null) {
       // Se houve pagamento, usa a data do último pagamento
       baseDate = new Date(debt.last_payment_date);
@@ -144,19 +203,19 @@ const Debts = () => {
       // Se não houve pagamento, usa a data de vencimento
       baseDate = new Date(debt.due_date);
     }
-    
+
     const now = new Date();
-    
+
     // Se ainda não venceu, não aplica juros
     if (now <= baseDate && !debt.last_payment_date) {
       return debt.current_amount;
     }
-    
+
     // Calcular diferença em dias e converter para meses
     const diffTime = now.getTime() - baseDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const monthsElapsed = Math.max(0, diffDays / 30); // Considera 30 dias por mês
-    
+
     // Se passou menos de um dia após vencimento, não aplica juros
     if (diffDays < 1) {
       return debt.current_amount;
@@ -164,8 +223,9 @@ const Debts = () => {
 
     // Aplicar juros compostos mensais ao saldo atual
     const monthlyRate = debt.monthly_interest_rate / 100;
-    const currentAmount = debt.current_amount * Math.pow(1 + monthlyRate, monthsElapsed);
-    
+    const currentAmount =
+      debt.current_amount * Math.pow(1 + monthlyRate, monthsElapsed);
+
     return currentAmount;
   };
 
@@ -173,18 +233,21 @@ const Debts = () => {
     const currentAmountWithInterest = calculateCurrentAmount(debt);
     const actualPaid = Math.max(0, debt.original_amount - debt.current_amount);
     const totalDebtWithInterest = currentAmountWithInterest + actualPaid;
-    const percentage = totalDebtWithInterest > 0 ? (actualPaid / totalDebtWithInterest) * 100 : 0;
+    const percentage =
+      totalDebtWithInterest > 0
+        ? (actualPaid / totalDebtWithInterest) * 100
+        : 0;
     return Math.max(0, Math.min(100, percentage));
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      original_amount: '',
-      monthly_interest_rate: '',
-      due_date: '',
-      creditor: '',
-      description: ''
+      name: "",
+      original_amount: "",
+      monthly_interest_rate: "",
+      due_date: "",
+      creditor: "",
+      description: "",
     });
   };
 
@@ -197,10 +260,10 @@ const Debts = () => {
     setFormData({
       name: debt.name,
       original_amount: debt.original_amount.toString(),
-      monthly_interest_rate: debt.monthly_interest_rate?.toString() || '',
-      due_date: debt.due_date ? debt.due_date.split('T')[0] : '',
-      creditor: debt.creditor || '',
-      description: debt.description || ''
+      monthly_interest_rate: debt.monthly_interest_rate?.toString() || "",
+      due_date: debt.due_date ? debt.due_date.split("T")[0] : "",
+      creditor: debt.creditor || "",
+      description: debt.description || "",
     });
     setEditingDebt(debt);
     setEditModalOpen(true);
@@ -214,19 +277,33 @@ const Debts = () => {
   const openPaymentModal = (debt: Debt) => {
     const currentAmount = calculateCurrentAmount(debt);
     setPayingDebt(debt);
+
+    // Buscar categoria "Dívidas" automaticamente
+    let defaultCategoryId = "";
+    if (categories.length > 0) {
+      const debtCategory = categories.find(
+        (cat) =>
+          cat.name.toLowerCase().includes("dívida") ||
+          cat.name.toLowerCase().includes("divida")
+      );
+      defaultCategoryId = debtCategory ? debtCategory.id : categories[0].id;
+    }
+
     setPaymentData({
-      amount: '',
-      bank_account_id: '',
-      description: `Pagamento de ${debt.name}`
+      amount: "",
+      bank_account_id: "",
+      description: `Pagamento de ${debt.name}`,
+      category_id: defaultCategoryId,
     });
     setPaymentModalOpen(true);
   };
 
   const resetPaymentForm = () => {
     setPaymentData({
-      amount: '',
-      bank_account_id: '',
-      description: ''
+      amount: "",
+      bank_account_id: "",
+      description: "",
+      category_id: "",
     });
     setProcessingPayment(false);
   };
@@ -236,17 +313,21 @@ const Debts = () => {
 
     try {
       const { data, error } = await supabase
-        .from('debts')
-        .insert([{
-          user_id: user.id,
-          name: formData.name.trim(),
-          original_amount: parseFloat(formData.original_amount),
-          current_amount: parseFloat(formData.original_amount), // Valor atual = valor original inicialmente
-          monthly_interest_rate: formData.monthly_interest_rate ? parseFloat(formData.monthly_interest_rate) : null,
-          due_date: formData.due_date || null,
-          creditor: formData.creditor.trim() || null,
-          description: formData.description.trim() || null
-        }])
+        .from("debts")
+        .insert([
+          {
+            user_id: user.id,
+            name: formData.name.trim(),
+            original_amount: parseFloat(formData.original_amount),
+            current_amount: parseFloat(formData.original_amount), // Valor atual = valor original inicialmente
+            monthly_interest_rate: formData.monthly_interest_rate
+              ? parseFloat(formData.monthly_interest_rate)
+              : null,
+            due_date: formData.due_date || null,
+            creditor: formData.creditor.trim() || null,
+            description: formData.description.trim() || null,
+          },
+        ])
         .select();
 
       if (error) throw error;
@@ -255,25 +336,28 @@ const Debts = () => {
       setCreateModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error('Erro ao criar dívida:', error);
+      console.error("Erro ao criar dívida:", error);
     }
   };
 
   const handleEdit = async () => {
-    if (!editingDebt || !formData.name.trim() || !formData.original_amount) return;
+    if (!editingDebt || !formData.name.trim() || !formData.original_amount)
+      return;
 
     try {
       const { error } = await supabase
-        .from('debts')
+        .from("debts")
         .update({
           name: formData.name.trim(),
           original_amount: parseFloat(formData.original_amount),
-          monthly_interest_rate: formData.monthly_interest_rate ? parseFloat(formData.monthly_interest_rate) : null,
+          monthly_interest_rate: formData.monthly_interest_rate
+            ? parseFloat(formData.monthly_interest_rate)
+            : null,
           due_date: formData.due_date || null,
           creditor: formData.creditor.trim() || null,
-          description: formData.description.trim() || null
+          description: formData.description.trim() || null,
         })
-        .eq('id', editingDebt.id);
+        .eq("id", editingDebt.id);
 
       if (error) throw error;
 
@@ -282,7 +366,7 @@ const Debts = () => {
       setEditingDebt(null);
       resetForm();
     } catch (error) {
-      console.error('Erro ao editar dívida:', error);
+      console.error("Erro ao editar dívida:", error);
     }
   };
 
@@ -291,9 +375,9 @@ const Debts = () => {
 
     try {
       const { error } = await supabase
-        .from('debts')
+        .from("debts")
         .delete()
-        .eq('id', deletingDebt.id);
+        .eq("id", deletingDebt.id);
 
       if (error) throw error;
 
@@ -301,13 +385,20 @@ const Debts = () => {
       setDeleteModalOpen(false);
       setDeletingDebt(null);
     } catch (error) {
-      console.error('Erro ao deletar dívida:', error);
+      console.error("Erro ao deletar dívida:", error);
     }
   };
 
   const handlePayment = async () => {
-    if (!user || !payingDebt || !paymentData.amount.trim() || !paymentData.bank_account_id || processingPayment) return;
-    
+    if (
+      !user ||
+      !payingDebt ||
+      !paymentData.amount.trim() ||
+      !paymentData.bank_account_id ||
+      processingPayment
+    )
+      return;
+
     const currentAmountWithInterest = calculateCurrentAmount(payingDebt);
     const paymentAmount = parseFloat(paymentData.amount);
     if (paymentAmount <= 0 || paymentAmount > currentAmountWithInterest) return;
@@ -315,42 +406,71 @@ const Debts = () => {
     setProcessingPayment(true);
 
     try {
+      // Buscar categoria de "Dívidas" ou usar a primeira categoria de despesa
+      let categoryId = paymentData.category_id;
+
+      if (!categoryId && categories.length > 0) {
+        const debtCategory = categories.find(
+          (cat) =>
+            cat.name.toLowerCase().includes("dívida") ||
+            cat.name.toLowerCase().includes("divida")
+        );
+        categoryId = debtCategory ? debtCategory.id : categories[0].id;
+      }
+
       // Criar transação de despesa (pagamento da dívida)
-      const { error: transactionError } = await supabase.from('transactions').insert([
-        {
-          user_id: user.id,
-          type: 'despesa',
-          value: paymentAmount,
-          description: paymentData.description.trim() || `Pagamento de ${payingDebt.name}`,
-          bank_account_id: paymentData.bank_account_id,
-          transaction_date: new Date().toISOString().split('T')[0],
-        }
-      ]);
+      const transactionData: {
+        user_id: string;
+        type: "receita" | "despesa";
+        value: number;
+        description: string;
+        bank_account_id: string;
+        transaction_date: string;
+        category_id?: string;
+        debt_id?: string;
+      } = {
+        user_id: user.id,
+        type: "despesa",
+        value: paymentAmount,
+        description:
+          paymentData.description.trim() || `Pagamento de ${payingDebt.name}`,
+        bank_account_id: paymentData.bank_account_id,
+        transaction_date: new Date().toISOString().split("T")[0],
+        debt_id: payingDebt.id,
+      };
+
+      if (categoryId) {
+        transactionData.category_id = categoryId;
+      }
+
+      const { error: transactionError } = await supabase
+        .from("transactions")
+        .insert([transactionData]);
 
       if (transactionError) throw transactionError;
 
       // Calcular novo valor atual após pagamento
       // O novo current_amount será o valor com juros menos o pagamento
       const newCurrentAmount = currentAmountWithInterest - paymentAmount;
-      
+
       // Tentar atualizar com last_payment_date, se falhar, atualizar apenas current_amount
       let updateData: any = { current_amount: newCurrentAmount };
-      
+
       try {
         // Tentar incluir last_payment_date
         updateData.last_payment_date = new Date().toISOString();
         const { error: debtError } = await supabase
-          .from('debts')
+          .from("debts")
           .update(updateData)
-          .eq('id', payingDebt.id);
-          
-        if (debtError && debtError.message.includes('last_payment_date')) {
+          .eq("id", payingDebt.id);
+
+        if (debtError && debtError.message.includes("last_payment_date")) {
           // Se der erro na coluna last_payment_date, tentar sem ela
           delete updateData.last_payment_date;
           const { error: debtError2 } = await supabase
-            .from('debts')
+            .from("debts")
             .update(updateData)
-            .eq('id', payingDebt.id);
+            .eq("id", payingDebt.id);
           if (debtError2) throw debtError2;
         } else if (debtError) {
           throw debtError;
@@ -364,15 +484,25 @@ const Debts = () => {
       setPayingDebt(null);
       resetPaymentForm();
     } catch (error) {
-      console.error('Erro ao processar pagamento:', error);
+      console.error("Erro ao processar pagamento:", error);
     } finally {
       setProcessingPayment(false);
     }
   };
 
-  const totalOriginal = debts.reduce((sum, debt) => sum + debt.original_amount, 0);
-  const totalCurrent = debts.reduce((sum, debt) => sum + calculateCurrentAmount(debt), 0);
-  const totalPaid = debts.reduce((sum, debt) => sum + Math.max(0, debt.original_amount - debt.current_amount), 0);
+  const totalOriginal = debts.reduce(
+    (sum, debt) => sum + debt.original_amount,
+    0
+  );
+  const totalCurrent = debts.reduce(
+    (sum, debt) => sum + calculateCurrentAmount(debt),
+    0
+  );
+  const totalPaid = debts.reduce(
+    (sum, debt) =>
+      sum + Math.max(0, debt.original_amount - debt.current_amount),
+    0
+  );
 
   if (loading) {
     return (
@@ -402,22 +532,50 @@ const Debts = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dívidas</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Dívidas
+          </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             Gerencie suas dívidas e acompanhe o progresso dos pagamentos
           </p>
         </div>
-        <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
-          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-          Nova Dívida
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full sm:w-auto">
+          <div className="flex items-center justify-between sm:justify-start gap-2 p-3 sm:p-0 rounded-lg sm:rounded-none bg-muted sm:bg-transparent">
+            <Label
+              htmlFor="show-paid-debts"
+              className="text-xs sm:text-sm cursor-pointer"
+            >
+              Mostrar pagas
+            </Label>
+            <Switch
+              id="show-paid-debts"
+              checked={showPaidDebts}
+              onCheckedChange={setShowPaidDebts}
+            />
+          </div>
+          <Button
+            onClick={openCreateModal}
+            style={{ background: "var(--expense-gradient)" }}
+            className="w-full sm:w-auto"
+          >
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+            Nova Dívida
+          </Button>
+        </div>
       </div>
 
       {/* Resumo das Dívidas */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <Card style={{ background: 'var(--expense-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--expense-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium text-white">Total em Dívidas</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">
+              Total em Dívidas
+            </CardTitle>
             <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
@@ -427,9 +585,16 @@ const Debts = () => {
           </CardContent>
         </Card>
 
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Pago</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              Total Pago
+            </CardTitle>
             <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
@@ -439,9 +604,16 @@ const Debts = () => {
           </CardContent>
         </Card>
 
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Valor Original</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              Valor Original
+            </CardTitle>
             <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
@@ -453,15 +625,27 @@ const Debts = () => {
       </div>
 
       {/* Lista de Dívidas */}
-      {debts.length === 0 ? (
-        <Card style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
+      {debts.filter((debt) => showPaidDebts || calculateCurrentAmount(debt) > 0)
+        .length === 0 ? (
+        <Card
+          style={{
+            background: "var(--card-gradient)",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
           <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 p-4 sm:p-6">
             <CreditCard className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2">Nenhuma dívida cadastrada</h3>
+            <h3 className="text-base sm:text-lg font-semibold mb-2">
+              Nenhuma dívida cadastrada
+            </h3>
             <p className="text-sm sm:text-base text-muted-foreground text-center mb-4 sm:mb-6">
               Mantenha o controle das suas dívidas registrando-as aqui
             </p>
-            <Button onClick={openCreateModal} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
+            <Button
+              onClick={openCreateModal}
+              style={{ background: "var(--expense-gradient)" }}
+              className="w-full sm:w-auto"
+            >
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               Registrar Dívida
             </Button>
@@ -469,115 +653,180 @@ const Debts = () => {
         </Card>
       ) : (
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-          {debts.map((debt) => {
-            const currentAmount = calculateCurrentAmount(debt);
-            const progress = getDebtProgress(debt);
-            const daysUntilDue = getDaysUntilDue(debt.due_date);
-            const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
-            const isDueSoon = daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0;
+          {debts
+            .filter((debt) => showPaidDebts || calculateCurrentAmount(debt) > 0)
+            .map((debt) => {
+              const currentAmount = calculateCurrentAmount(debt);
+              const progress = getDebtProgress(debt);
+              const daysUntilDue = getDaysUntilDue(debt.due_date);
+              const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
+              const isDueSoon =
+                daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0;
 
-            return (
-              <Card key={debt.id} style={{ background: 'var(--card-gradient)', boxShadow: 'var(--shadow-soft)' }}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <CardTitle className="text-base sm:text-lg truncate">{debt.name}</CardTitle>
-                    <CardDescription>
-                      {debt.creditor && (
-                        <span className="text-xs">Credor: {debt.creditor}</span>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => openPaymentModal(debt)} 
-                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-success hover:text-success"
-                      disabled={currentAmount <= 0}
-                      title="Fazer pagamento"
-                    >
-                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openEditModal(debt)} className="h-7 w-7 sm:h-8 sm:w-8 p-0">
-                      <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-7 w-7 sm:h-8 sm:w-8 p-0" onClick={() => openDeleteModal(debt)}>
-                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6">
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs sm:text-sm">Valor Original</p>
-                        <p className="font-semibold text-sm sm:text-base">{formatCurrency(debt.original_amount)}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-xs sm:text-sm">Valor Atual</p>
-                        <p className="font-semibold text-expense text-sm sm:text-base">{formatCurrency(currentAmount)}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs sm:text-sm text-muted-foreground">Progresso do Pagamento</span>
-                        <span className="text-xs sm:text-sm font-semibold text-success">
-                          {progress.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={progress} className="h-1.5 sm:h-2" />
-                      <p className="text-xs mt-1 text-success">
-                        Pago: {formatCurrency(Math.max(0, debt.original_amount - debt.current_amount))}
-                      </p>
-                    </div>
-
-                    {debt.due_date && (
+              return (
+                <Card
+                  key={debt.id}
+                  style={{
+                    background: "var(--card-gradient)",
+                    boxShadow: "var(--shadow-soft)",
+                  }}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                    <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <AlertCircle 
-                          className={`h-3 w-3 sm:h-4 sm:w-4 ${
-                            isOverdue ? 'text-destructive' : isDueSoon ? 'text-warning' : 'text-muted-foreground'
-                          }`} 
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm">
-                            <span className="text-muted-foreground">Vencimento: </span>
-                            <span className={isOverdue ? 'text-destructive font-semibold' : ''}>
-                              {formatDate(debt.due_date)}
-                            </span>
+                        <CardTitle className="text-base sm:text-lg truncate">
+                          {debt.name}
+                        </CardTitle>
+                        {currentAmount <= 0 && (
+                          <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                            Paga
+                          </span>
+                        )}
+                      </div>
+                      <CardDescription>
+                        {debt.creditor && (
+                          <span className="text-xs">
+                            Credor: {debt.creditor}
+                          </span>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openPaymentModal(debt)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-success hover:text-success"
+                        disabled={currentAmount <= 0}
+                        title="Fazer pagamento"
+                      >
+                        <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditModal(debt)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                      >
+                        <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive h-7 w-7 sm:h-8 sm:w-8 p-0"
+                        onClick={() => openDeleteModal(debt)}
+                      >
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs sm:text-sm">
+                            Valor Original
                           </p>
-                          {daysUntilDue !== null && (
-                            <p className={`text-xs ${
-                              isOverdue ? 'text-destructive' : isDueSoon ? 'text-warning' : 'text-muted-foreground'
-                            }`}>
-                              {isOverdue 
-                                ? `Vencida há ${Math.abs(daysUntilDue)} dia(s)`
-                                : isDueSoon
-                                ? `Vence em ${daysUntilDue} dia(s)`
-                                : `${daysUntilDue} dias restantes`
-                              }
-                            </p>
-                          )}
+                          <p className="font-semibold text-sm sm:text-base">
+                            {formatCurrency(debt.original_amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs sm:text-sm">
+                            Valor Atual
+                          </p>
+                          <p className="font-semibold text-expense text-sm sm:text-base">
+                            {formatCurrency(currentAmount)}
+                          </p>
                         </div>
                       </div>
-                    )}
 
-                    {debt.monthly_interest_rate && (
-                      <div className="text-xs text-muted-foreground">
-                        Taxa de juros: {debt.monthly_interest_rate}% ao mês
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs sm:text-sm text-muted-foreground">
+                            Progresso do Pagamento
+                          </span>
+                          <span className="text-xs sm:text-sm font-semibold text-success">
+                            {progress.toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress value={progress} className="h-1.5 sm:h-2" />
+                        <p className="text-xs mt-1 text-success">
+                          Pago:{" "}
+                          {formatCurrency(
+                            Math.max(
+                              0,
+                              debt.original_amount - debt.current_amount
+                            )
+                          )}
+                        </p>
                       </div>
-                    )}
 
-                    {debt.description && (
-                      <div className="text-xs text-muted-foreground border-t pt-2">
-                        {debt.description}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                      {debt.due_date && (
+                        <div className="flex items-center gap-2">
+                          <AlertCircle
+                            className={`h-3 w-3 sm:h-4 sm:w-4 ${
+                              isOverdue
+                                ? "text-destructive"
+                                : isDueSoon
+                                ? "text-warning"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm">
+                              <span className="text-muted-foreground">
+                                Vencimento:{" "}
+                              </span>
+                              <span
+                                className={
+                                  isOverdue
+                                    ? "text-destructive font-semibold"
+                                    : ""
+                                }
+                              >
+                                {formatDate(debt.due_date)}
+                              </span>
+                            </p>
+                            {daysUntilDue !== null && (
+                              <p
+                                className={`text-xs ${
+                                  isOverdue
+                                    ? "text-destructive"
+                                    : isDueSoon
+                                    ? "text-warning"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {isOverdue
+                                  ? `Vencida há ${Math.abs(
+                                      daysUntilDue
+                                    )} dia(s)`
+                                  : isDueSoon
+                                  ? `Vence em ${daysUntilDue} dia(s)`
+                                  : `${daysUntilDue} dias restantes`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {debt.monthly_interest_rate && (
+                        <div className="text-xs text-muted-foreground">
+                          Taxa de juros: {debt.monthly_interest_rate}% ao mês
+                        </div>
+                      )}
+
+                      {debt.description && (
+                        <div className="text-xs text-muted-foreground border-t pt-2">
+                          {debt.description}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       )}
 
@@ -589,71 +838,115 @@ const Debts = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name" className="text-sm font-medium">Nome da Dívida</Label>
+              <Label htmlFor="name" className="text-sm font-medium">
+                Nome da Dívida
+              </Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Ex: Cartão de Crédito"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="original_amount" className="text-sm font-medium">Valor da Dívida *</Label>
+                <Label
+                  htmlFor="original_amount"
+                  className="text-sm font-medium"
+                >
+                  Valor da Dívida *
+                </Label>
                 <Input
                   id="original_amount"
                   type="number"
                   step="0.01"
                   value={formData.original_amount}
-                  onChange={(e) => setFormData({ ...formData, original_amount: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      original_amount: e.target.value,
+                    })
+                  }
                   placeholder="0.00"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="monthly_interest_rate" className="text-sm font-medium">Taxa de Juros (% ao mês)</Label>
+                <Label
+                  htmlFor="monthly_interest_rate"
+                  className="text-sm font-medium"
+                >
+                  Taxa de Juros (% ao mês)
+                </Label>
                 <Input
                   id="monthly_interest_rate"
                   type="number"
                   step="0.01"
                   value={formData.monthly_interest_rate}
-                  onChange={(e) => setFormData({ ...formData, monthly_interest_rate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      monthly_interest_rate: e.target.value,
+                    })
+                  }
                   placeholder="0.00"
                 />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="due_date" className="text-sm font-medium">Data de Vencimento</Label>
+              <Label htmlFor="due_date" className="text-sm font-medium">
+                Data de Vencimento
+              </Label>
               <Input
                 id="due_date"
                 type="date"
                 value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, due_date: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="creditor" className="text-sm font-medium">Credor</Label>
+              <Label htmlFor="creditor" className="text-sm font-medium">
+                Credor
+              </Label>
               <Input
                 id="creditor"
                 value={formData.creditor}
-                onChange={(e) => setFormData({ ...formData, creditor: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, creditor: e.target.value })
+                }
                 placeholder="Ex: Banco XYZ"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description" className="text-sm font-medium">Descrição</Label>
+              <Label htmlFor="description" className="text-sm font-medium">
+                Descrição
+              </Label>
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Detalhes adicionais sobre a dívida"
               />
             </div>
           </div>
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setCreateModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleCreate} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
+            <Button
+              onClick={handleCreate}
+              style={{ background: "var(--expense-gradient)" }}
+              className="w-full sm:w-auto"
+            >
               Criar Dívida
             </Button>
           </div>
@@ -668,71 +961,115 @@ const Debts = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-name" className="text-sm font-medium">Nome da Dívida</Label>
+              <Label htmlFor="edit-name" className="text-sm font-medium">
+                Nome da Dívida
+              </Label>
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Ex: Cartão de Crédito"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-original_amount" className="text-sm font-medium">Valor da Dívida *</Label>
+                <Label
+                  htmlFor="edit-original_amount"
+                  className="text-sm font-medium"
+                >
+                  Valor da Dívida *
+                </Label>
                 <Input
                   id="edit-original_amount"
                   type="number"
                   step="0.01"
                   value={formData.original_amount}
-                  onChange={(e) => setFormData({ ...formData, original_amount: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      original_amount: e.target.value,
+                    })
+                  }
                   placeholder="0.00"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-monthly_interest_rate" className="text-sm font-medium">Taxa de Juros (% ao mês)</Label>
+                <Label
+                  htmlFor="edit-monthly_interest_rate"
+                  className="text-sm font-medium"
+                >
+                  Taxa de Juros (% ao mês)
+                </Label>
                 <Input
                   id="edit-monthly_interest_rate"
                   type="number"
                   step="0.01"
                   value={formData.monthly_interest_rate}
-                  onChange={(e) => setFormData({ ...formData, monthly_interest_rate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      monthly_interest_rate: e.target.value,
+                    })
+                  }
                   placeholder="0.00"
                 />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-due_date" className="text-sm font-medium">Data de Vencimento</Label>
+              <Label htmlFor="edit-due_date" className="text-sm font-medium">
+                Data de Vencimento
+              </Label>
               <Input
                 id="edit-due_date"
                 type="date"
                 value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, due_date: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-creditor" className="text-sm font-medium">Credor</Label>
+              <Label htmlFor="edit-creditor" className="text-sm font-medium">
+                Credor
+              </Label>
               <Input
                 id="edit-creditor"
                 value={formData.creditor}
-                onChange={(e) => setFormData({ ...formData, creditor: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, creditor: e.target.value })
+                }
                 placeholder="Ex: Banco XYZ"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-description" className="text-sm font-medium">Descrição</Label>
+              <Label htmlFor="edit-description" className="text-sm font-medium">
+                Descrição
+              </Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Detalhes adicionais sobre a dívida"
               />
             </div>
           </div>
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditModalOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setEditModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleEdit} style={{ background: 'var(--expense-gradient)' }} className="w-full sm:w-auto">
+            <Button
+              onClick={handleEdit}
+              style={{ background: "var(--expense-gradient)" }}
+              className="w-full sm:w-auto"
+            >
               Salvar Alterações
             </Button>
           </div>
@@ -750,8 +1087,13 @@ const Debts = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto">
+            <AlertDialogCancel className="w-full sm:w-auto">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -771,22 +1113,29 @@ const Debts = () => {
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="font-medium">{payingDebt.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Saldo atual: {formatCurrency(calculateCurrentAmount(payingDebt))}
+                    Saldo atual:{" "}
+                    {formatCurrency(calculateCurrentAmount(payingDebt))}
                   </p>
                 </div>
               </div>
             )}
-            
+
             <div className="grid gap-2">
-              <Label htmlFor="payment-amount" className="text-sm font-medium">Valor do Pagamento *</Label>
+              <Label htmlFor="payment-amount" className="text-sm font-medium">
+                Valor do Pagamento *
+              </Label>
               <Input
                 id="payment-amount"
                 type="number"
                 step="0.01"
                 value={paymentData.amount}
-                onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                onChange={(e) =>
+                  setPaymentData({ ...paymentData, amount: e.target.value })
+                }
                 placeholder="0.00"
-                max={payingDebt ? calculateCurrentAmount(payingDebt) : undefined}
+                max={
+                  payingDebt ? calculateCurrentAmount(payingDebt) : undefined
+                }
               />
               {payingDebt && (
                 <div className="flex gap-2">
@@ -795,7 +1144,12 @@ const Debts = () => {
                     variant="outline"
                     size="sm"
                     className="text-xs"
-                    onClick={() => setPaymentData({ ...paymentData, amount: calculateCurrentAmount(payingDebt).toFixed(2) })}
+                    onClick={() =>
+                      setPaymentData({
+                        ...paymentData,
+                        amount: calculateCurrentAmount(payingDebt).toFixed(2),
+                      })
+                    }
                   >
                     Quitar Total
                   </Button>
@@ -804,7 +1158,14 @@ const Debts = () => {
                     variant="outline"
                     size="sm"
                     className="text-xs"
-                    onClick={() => setPaymentData({ ...paymentData, amount: (calculateCurrentAmount(payingDebt) / 2).toFixed(2) })}
+                    onClick={() =>
+                      setPaymentData({
+                        ...paymentData,
+                        amount: (
+                          calculateCurrentAmount(payingDebt) / 2
+                        ).toFixed(2),
+                      })
+                    }
                   >
                     50% do Saldo
                   </Button>
@@ -813,10 +1174,17 @@ const Debts = () => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="payment-bank-account" className="text-sm font-medium">Conta para Débito *</Label>
+              <Label
+                htmlFor="payment-bank-account"
+                className="text-sm font-medium"
+              >
+                Conta para Débito *
+              </Label>
               <Select
                 value={paymentData.bank_account_id}
-                onValueChange={(value) => setPaymentData({ ...paymentData, bank_account_id: value })}
+                onValueChange={(value) =>
+                  setPaymentData({ ...paymentData, bank_account_id: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a conta" />
@@ -832,32 +1200,51 @@ const Debts = () => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="payment-description" className="text-sm font-medium">Descrição</Label>
+              <Label
+                htmlFor="payment-description"
+                className="text-sm font-medium"
+              >
+                Descrição
+              </Label>
               <Textarea
                 id="payment-description"
                 value={paymentData.description}
-                onChange={(e) => setPaymentData({ ...paymentData, description: e.target.value })}
+                onChange={(e) =>
+                  setPaymentData({
+                    ...paymentData,
+                    description: e.target.value,
+                  })
+                }
                 placeholder="Descrição do pagamento"
               />
             </div>
           </div>
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => setPaymentModalOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setPaymentModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handlePayment}
               disabled={
                 processingPayment ||
-                !paymentData.amount.trim() || 
+                !paymentData.amount.trim() ||
                 !paymentData.bank_account_id ||
                 parseFloat(paymentData.amount) <= 0 ||
-                parseFloat(paymentData.amount) > (payingDebt ? calculateCurrentAmount(payingDebt) : 0)
+                parseFloat(paymentData.amount) >
+                  (payingDebt ? calculateCurrentAmount(payingDebt) : 0)
               }
-              style={{ background: processingPayment ? '#6b7280' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+              style={{
+                background: processingPayment
+                  ? "#6b7280"
+                  : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              }}
               className="w-full sm:w-auto text-white hover:opacity-90 transition-opacity"
             >
-              {processingPayment ? 'Processando...' : 'Processar Pagamento'}
+              {processingPayment ? "Processando..." : "Processar Pagamento"}
             </Button>
           </div>
         </DialogContent>

@@ -387,7 +387,7 @@ const Goals = () => {
 
     try {
       setError(null);
-      
+
       // Primeiro, deletar todos os registros de progresso relacionados a esta meta
       const { error: progressError } = await supabase
         .from("goal_progress")
@@ -411,11 +411,15 @@ const Goals = () => {
 
       toast({
         title: "Sucesso",
-        description: "Meta e todos os seus progressos foram deletados com sucesso!",
+        description:
+          "Meta e todos os seus progressos foram deletados com sucesso!",
       });
     } catch (error) {
       console.error("Erro ao deletar meta:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao deletar meta financeira.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro ao deletar meta financeira.";
       setError(errorMessage);
       toast({
         title: "Erro",
@@ -475,7 +479,12 @@ const Goals = () => {
   };
 
   const handleAddValue = async () => {
-    if (!user || !selectedGoal || !addValueData.value.trim() || !addValueData.date) {
+    if (
+      !user ||
+      !selectedGoal ||
+      !addValueData.value.trim() ||
+      !addValueData.date
+    ) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios (valor e data).",
@@ -528,8 +537,11 @@ const Goals = () => {
         user_id: user.id,
         goal_id: selectedGoal.id,
         value: parseFloat(value.toString()),
-        description: addValueData.description?.trim() || 
-          `Progresso da meta: ${selectedGoal.type === "receita" ? "Receita" : "Despesa"}`,
+        description:
+          addValueData.description?.trim() ||
+          `Progresso da meta: ${
+            selectedGoal.type === "receita" ? "Receita" : "Despesa"
+          }`,
         progress_date: addValueData.date,
       };
 
@@ -538,8 +550,12 @@ const Goals = () => {
       if (existingProgress && existingProgress.length > 0) {
         // Atualizar o registro existente, somando o novo valor ao valor atual
         const existingRecord = existingProgress[0];
-        const newTotalValue = parseFloat(existingRecord.value.toString()) + parseFloat(value.toString());
-        const newDescription = `${existingRecord.description} + ${addValueData.description || `R$ ${value.toFixed(2)}`}`;
+        const newTotalValue =
+          parseFloat(existingRecord.value.toString()) +
+          parseFloat(value.toString());
+        const newDescription = `${existingRecord.description} + ${
+          addValueData.description || `R$ ${value.toFixed(2)}`
+        }`;
 
         const result = await supabase
           .from("goal_progress")
@@ -549,7 +565,7 @@ const Goals = () => {
           })
           .eq("id", existingRecord.id)
           .select();
-        
+
         insertedData = result.data;
         progressError = result.error;
       } else {
@@ -558,14 +574,18 @@ const Goals = () => {
           .from("goal_progress")
           .insert([progressData])
           .select();
-        
+
         insertedData = result.data;
         progressError = result.error;
       }
 
       if (progressError) {
         console.error("Erro detalhado ao inserir progresso:", progressError);
-        throw new Error(`Erro ao registrar progresso: ${progressError.message || progressError}`);
+        throw new Error(
+          `Erro ao registrar progresso: ${
+            progressError.message || progressError
+          }`
+        );
       }
 
       setAddValueModalOpen(false);
@@ -582,13 +602,22 @@ const Goals = () => {
       const wasUpdated = existingProgress && existingProgress.length > 0;
       toast({
         title: "Sucesso",
-        description: wasUpdated 
-          ? `Valor de ${formatCurrency(value)} adicionado ao progresso existente da data ${formatDate(addValueData.date)}.`
-          : `Valor de ${formatCurrency(value)} registrado com sucesso para ${formatDate(addValueData.date)}.`,
+        description: wasUpdated
+          ? `Valor de ${formatCurrency(
+              value
+            )} adicionado ao progresso existente da data ${formatDate(
+              addValueData.date
+            )}.`
+          : `Valor de ${formatCurrency(
+              value
+            )} registrado com sucesso para ${formatDate(addValueData.date)}.`,
       });
     } catch (error) {
       console.error("Erro ao adicionar valor:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao adicionar valor à meta.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro ao adicionar valor à meta.";
       setError(errorMessage);
       toast({
         title: "Erro",
@@ -782,7 +811,8 @@ const Goals = () => {
                           <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                           <AlertDialogDescription>
                             Esta ação não pode ser desfeita. Isso irá deletar
-                            permanentemente esta meta financeira e todos os seus progressos registrados.
+                            permanentemente esta meta financeira e todos os seus
+                            progressos registrados.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -1277,7 +1307,9 @@ const Goals = () => {
           <DialogHeader>
             <DialogTitle>Registrar Progresso da Meta</DialogTitle>
             <DialogDescription>
-              Adicione valores para acompanhar o progresso desta meta. Se já existir um registro para a data selecionada, o valor será somado ao existente.
+              Adicione valores para acompanhar o progresso desta meta. Se já
+              existir um registro para a data selecionada, o valor será somado
+              ao existente.
             </DialogDescription>
             {selectedGoal && (
               <div className="text-sm text-muted-foreground mt-2 p-3 bg-muted rounded-lg">
